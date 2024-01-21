@@ -101,7 +101,7 @@ internal class APIController(
         fun getHttpClient(engine: HttpClientEngine?): HttpClient {
             val configuration: HttpClientConfig<*>.() -> Unit = {
                 install(HttpTimeout) {
-                    requestTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS
+                    requestTimeoutMillis = Long.MAX_VALUE
                     socketTimeoutMillis = 80_000
                 }
                 install(ContentNegotiation) { json(JSON) }
