@@ -31,10 +31,10 @@ import kotlin.time.toDuration
 class RequestOptions(val timeout: Duration, val apiVersion: String = "v1") {
     @JvmOverloads
     constructor(
-        timeout: Long? = HttpTimeout.INFINITE_TIMEOUT_MS,
+        timeout: Long? = Long.MAX_VALUE,
         apiVersion: String = "v1",
     ) : this(
-        (timeout ?: HttpTimeout.INFINITE_TIMEOUT_MS).toDuration(DurationUnit.MILLISECONDS),
+        (timeout ?: Long.MAX_VALUE).toDuration(DurationUnit.MILLISECONDS),
         apiVersion,
     )
 }
