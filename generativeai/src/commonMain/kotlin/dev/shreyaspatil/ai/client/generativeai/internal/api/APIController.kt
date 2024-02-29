@@ -16,7 +16,9 @@
 package dev.shreyaspatil.ai.client.generativeai.internal.api
 
 import dev.shreyaspatil.ai.client.generativeai.internal.util.decodeToFlow
+import dev.shreyaspatil.ai.client.generativeai.type.InvalidAPIKeyException
 import dev.shreyaspatil.ai.client.generativeai.type.ServerException
+import dev.shreyaspatil.ai.client.generativeai.type.UnsupportedUserLocationException
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
@@ -179,7 +181,13 @@ private suspend fun validateResponse(response: HttpResponse) {
             } catch (e: Throwable) {
                 "Unexpected Response:\n$text"
             }
-
+        if (message.contains("API key not valid")) {
+            throw InvalidAPIKeyException(message)
+        }
+        // TODO (b/325117891): Use a better method than string matching.
+        if (message == "User location is not supported for the API use.") {
+            throw UnsupportedUserLocationException()
+        }
         throw ServerException(message)
     }
 }

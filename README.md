@@ -59,7 +59,7 @@ The versioning scheme is of the form `X-Y` where:
 
 X is the _Generative AI  Android SDK_ version that is being tracked.
 Y is the _Multiplatform SDK_ version.
-For example, if _Generative AI  Android SDK_ is on `0.2.0` and _Multiplatform SDK_ is on `1.0.0`, the artifact for a release will be `dev.shreyaspatil.generativeai:generativeai-google:0.2.0-1.0.0`.
+For example, if _Generative AI  Android SDK_ is on `0.2.1` and _Multiplatform SDK_ is on `1.0.0`, the artifact for a release will be `dev.shreyaspatil.generativeai:generativeai-google:0.2.1-1.0.0`.
 
 ## Try sample app
 
