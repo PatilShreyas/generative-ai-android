@@ -16,7 +16,10 @@
 package dev.shreyaspatil.ai.client.generativeai.internal.api
 
 import dev.shreyaspatil.ai.client.generativeai.internal.util.decodeToFlow
+import dev.shreyaspatil.ai.client.generativeai.type.InvalidAPIKeyException
+import dev.shreyaspatil.ai.client.generativeai.type.RequestOptions
 import dev.shreyaspatil.ai.client.generativeai.type.ServerException
+import dev.shreyaspatil.ai.client.generativeai.type.UnsupportedUserLocationException
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
@@ -40,9 +43,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration
 
-// TODO: Should these stay here or be moved elsewhere?
-internal const val DOMAIN = "https://generativelanguage.googleapis.com/v1"
+internal const val DOMAIN = "https://generativelanguage.googleapis.com"
 
 internal val JSON = Json {
     ignoreUnknownKeys = true
@@ -58,34 +61,38 @@ internal val JSON = Json {
  *   Exposed primarily for DI in tests.
  * @property key The API key used for authentication.
  * @property model The model to use for generation.
+ * @property apiVersion the endpoint version to communicate with.
+ * @property timeout the maximum amount of time for a request to take in the initial exchange.
  */
 internal class APIController(
     private val key: String,
     model: String,
-    engine: HttpClientEngine? = null,
+    requestOptions: RequestOptions,
+    httpEngine: HttpClientEngine? = null,
 ) {
     private val model = fullModelName(model)
-    private val client = getHttpClient(engine)
+    private val client = getHttpClient(httpEngine, requestOptions.timeout)
+    private val apiVersion = requestOptions.apiVersion
 
-    suspend fun generateContent(request: GenerateContentRequest): GenerateContentResponse {
-        return client
-            .post("$DOMAIN/$model:generateContent") { applyCommonConfiguration(request) }
+    suspend fun generateContent(request: GenerateContentRequest): GenerateContentResponse =
+        client
+            .post("$DOMAIN/$apiVersion/$model:generateContent") { applyCommonConfiguration(request) }
             .also { validateResponse(it) }
             .body()
-    }
 
     fun generateContentStream(request: GenerateContentRequest): Flow<GenerateContentResponse> {
-        return client.postStream("$DOMAIN/$model:streamGenerateContent?alt=sse") {
+        return client.postStream<GenerateContentResponse>(
+            "$DOMAIN/$apiVersion/$model:streamGenerateContent?alt=sse",
+        ) {
             applyCommonConfiguration(request)
         }
     }
 
-    suspend fun countTokens(request: CountTokensRequest): CountTokensResponse {
-        return client
-            .post("$DOMAIN/$model:countTokens") { applyCommonConfiguration(request) }
+    suspend fun countTokens(request: CountTokensRequest): CountTokensResponse =
+        client
+            .post("$DOMAIN/$apiVersion/$model:countTokens") { applyCommonConfiguration(request) }
             .also { validateResponse(it) }
             .body()
-    }
 
     private fun HttpRequestBuilder.applyCommonConfiguration(request: Request) {
         when (request) {
@@ -98,10 +105,10 @@ internal class APIController(
     }
 
     companion object {
-        fun getHttpClient(engine: HttpClientEngine?): HttpClient {
+        fun getHttpClient(engine: HttpClientEngine?, timeout: Duration): HttpClient {
             val configuration: HttpClientConfig<*>.() -> Unit = {
                 install(HttpTimeout) {
-                    requestTimeoutMillis = Long.MAX_VALUE
+                    requestTimeoutMillis = timeout.inWholeMilliseconds
                     socketTimeoutMillis = 80_000
                 }
                 install(ContentNegotiation) { json(JSON) }
@@ -120,8 +127,7 @@ internal class APIController(
  *
  * Models must be prepended with the `models/` prefix when communicating with the backend.
  */
-private fun fullModelName(name: String): String =
-    name.takeIf { it.startsWith("models/") } ?: "models/$name"
+private fun fullModelName(name: String): String = name.takeIf { it.contains("/") } ?: "models/$name"
 
 /**
  * Makes a POST request to the specified [url] and returns a [Flow] of deserialized response objects
@@ -176,7 +182,13 @@ private suspend fun validateResponse(response: HttpResponse) {
             } catch (e: Throwable) {
                 "Unexpected Response:\n$text"
             }
-
+        if (message.contains("API key not valid")) {
+            throw InvalidAPIKeyException(message)
+        }
+        // TODO (b/325117891): Use a better method than string matching.
+        if (message == "User location is not supported for the API use.") {
+            throw UnsupportedUserLocationException()
+        }
         throw ServerException(message)
     }
 }

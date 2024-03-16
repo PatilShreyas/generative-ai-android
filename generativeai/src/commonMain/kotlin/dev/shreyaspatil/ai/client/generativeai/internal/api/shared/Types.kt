@@ -18,6 +18,8 @@ package dev.shreyaspatil.ai.client.generativeai.internal.api.shared
 import dev.shreyaspatil.ai.client.generativeai.internal.util.SerializableEnum
 import dev.shreyaspatil.ai.client.generativeai.internal.util.enumSerializer
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -40,7 +42,9 @@ internal enum class HarmCategory(override val serialName: String) : Serializable
 
 typealias Base64 = String
 
-@Serializable internal data class Content(val role: String? = null, val parts: List<Part>)
+@ExperimentalSerializationApi
+@Serializable
+internal data class Content(@EncodeDefault val role: String? = "user", val parts: List<Part>)
 
 @Serializable(PartSerializer::class)
 internal sealed interface Part

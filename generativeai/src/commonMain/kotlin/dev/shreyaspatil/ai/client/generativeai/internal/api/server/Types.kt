@@ -19,8 +19,10 @@ import dev.shreyaspatil.ai.client.generativeai.internal.api.shared.Content
 import dev.shreyaspatil.ai.client.generativeai.internal.api.shared.HarmCategory
 import dev.shreyaspatil.ai.client.generativeai.internal.util.SerializableEnum
 import dev.shreyaspatil.ai.client.generativeai.internal.util.enumSerializer
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 internal object BlockReasonSerializer :
     KSerializer<BlockReason> by enumSerializer(BlockReason.entries)
@@ -53,7 +55,10 @@ internal data class Candidate(
     val citationMetadata: CitationMetadata? = null,
 )
 
-@Serializable internal data class CitationMetadata(val citationSources: List<CitationSources>)
+@Serializable
+internal data class CitationMetadata
+@OptIn(ExperimentalSerializationApi::class)
+constructor(@JsonNames("citations") val citationSources: List<CitationSources>)
 
 @Serializable
 internal data class CitationSources(

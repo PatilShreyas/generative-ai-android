@@ -15,15 +15,28 @@
  */
 package dev.shreyaspatil.ai.client.generativeai
 
+import dev.shreyaspatil.ai.client.generativeai.type.RequestOptions
+import dev.shreyaspatil.ai.client.generativeai.type.RequestTimeoutException
 import dev.shreyaspatil.ai.client.generativeai.util.commonTest
+import dev.shreyaspatil.ai.client.generativeai.util.createGenerativeModel
 import dev.shreyaspatil.ai.client.generativeai.util.createResponses
+import dev.shreyaspatil.ai.client.generativeai.util.doBlocking
 import dev.shreyaspatil.ai.client.generativeai.util.prepareStreamingResponse
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
+import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.close
 import io.ktor.utils.io.writeFully
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withTimeout
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import kotlin.time.Duration.Companion.seconds
 
 internal class GenerativeModelTests {
@@ -43,5 +56,54 @@ internal class GenerativeModelTests {
                 channel.close()
             }
         }
+    }
+
+    @Test
+    fun `(generateContent) respects a custom timeout`() =
+        commonTest(requestOptions = RequestOptions(2.seconds)) {
+            shouldThrow<RequestTimeoutException> {
+                withTimeout(testTimeout) { model.generateContent("d") }
+            }
+        }
+}
+
+@RunWith(Parameterized::class)
+internal class ModelNamingTests(private val modelName: String, private val actualName: String) {
+
+    @Test
+    fun `request should include right model name`() = doBlocking {
+        val channel = ByteChannel(autoFlush = true)
+        val mockEngine = MockEngine {
+            respond(
+                channel,
+                HttpStatusCode.OK,
+                headersOf(HttpHeaders.ContentType, "application/json"),
+            )
+        }
+        prepareStreamingResponse(createResponses("Random")).forEach { channel.writeFully(it) }
+        val model =
+            createGenerativeModel(modelName, "super_cool_test_key", RequestOptions(), mockEngine)
+
+        withTimeout(5.seconds) {
+            model.generateContentStream().collect {
+                it.candidates.isEmpty() shouldBe false
+                channel.close()
+            }
+        }
+
+        mockEngine.requestHistory.first().url.encodedPath shouldContain actualName
+    }
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters
+        fun data() =
+            listOf(
+                arrayOf("gemini-pro", "models/gemini-pro"),
+                arrayOf("x/gemini-pro", "x/gemini-pro"),
+                arrayOf("models/gemini-pro", "models/gemini-pro"),
+                arrayOf("/modelname", "/modelname"),
+                arrayOf("modifiedNaming/mymodel", "modifiedNaming/mymodel"),
+            )
     }
 }

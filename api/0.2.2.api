@@ -22,7 +22,8 @@ public final class com/google/ai/client/generativeai/GenerativeModel {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/google/ai/client/generativeai/type/GenerationConfig;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/google/ai/client/generativeai/type/GenerationConfig;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/google/ai/client/generativeai/type/GenerationConfig;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/google/ai/client/generativeai/type/GenerationConfig;Ljava/util/List;Lcom/google/ai/client/generativeai/type/RequestOptions;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/google/ai/client/generativeai/type/GenerationConfig;Ljava/util/List;Lcom/google/ai/client/generativeai/type/RequestOptions;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun countTokens (Landroid/graphics/Bitmap;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun countTokens (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun countTokens ([Lcom/google/ai/client/generativeai/type/Content;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -35,6 +36,7 @@ public final class com/google/ai/client/generativeai/GenerativeModel {
 	public final fun getApiKey ()Ljava/lang/String;
 	public final fun getGenerationConfig ()Lcom/google/ai/client/generativeai/type/GenerationConfig;
 	public final fun getModelName ()Ljava/lang/String;
+	public final fun getRequestOptions ()Lcom/google/ai/client/generativeai/type/RequestOptions;
 	public final fun getSafetySettings ()Ljava/util/List;
 	public final fun startChat (Ljava/util/List;)Lcom/google/ai/client/generativeai/Chat;
 	public static synthetic fun startChat$default (Lcom/google/ai/client/generativeai/GenerativeModel;Ljava/util/List;ILjava/lang/Object;)Lcom/google/ai/client/generativeai/Chat;
@@ -224,6 +226,11 @@ public final class com/google/ai/client/generativeai/type/ImagePart : com/google
 	public final fun getImage ()Landroid/graphics/Bitmap;
 }
 
+public final class com/google/ai/client/generativeai/type/InvalidAPIKeyException : com/google/ai/client/generativeai/type/GoogleGenerativeAIException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
 public final class com/google/ai/client/generativeai/type/InvalidStateException : com/google/ai/client/generativeai/type/GoogleGenerativeAIException {
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -248,6 +255,22 @@ public final class com/google/ai/client/generativeai/type/PromptFeedback {
 	public fun <init> (Lcom/google/ai/client/generativeai/type/BlockReason;Ljava/util/List;)V
 	public final fun getBlockReason ()Lcom/google/ai/client/generativeai/type/BlockReason;
 	public final fun getSafetyRatings ()Ljava/util/List;
+}
+
+public final class com/google/ai/client/generativeai/type/RequestOptions {
+	public fun <init> ()V
+	public synthetic fun <init> (JLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JLjava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Long;)V
+	public fun <init> (Ljava/lang/Long;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/Long;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getApiVersion ()Ljava/lang/String;
+	public final fun getTimeout-UwyO8pc ()J
+}
+
+public final class com/google/ai/client/generativeai/type/RequestTimeoutException : com/google/ai/client/generativeai/type/GoogleGenerativeAIException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class com/google/ai/client/generativeai/type/ResponseStoppedException : com/google/ai/client/generativeai/type/GoogleGenerativeAIException {
@@ -287,3 +310,10 @@ public final class com/google/ai/client/generativeai/type/UnknownException : com
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
+
+public final class com/google/ai/client/generativeai/type/UnsupportedUserLocationException : com/google/ai/client/generativeai/type/GoogleGenerativeAIException {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+

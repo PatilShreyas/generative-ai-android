@@ -17,6 +17,7 @@ package dev.shreyaspatil.ai.client.generativeai.type
 
 import dev.shreyaspatil.ai.client.generativeai.GenerativeModel
 import io.ktor.serialization.JsonConvertException
+import kotlinx.coroutines.TimeoutCancellationException
 
 /** Parent class for any errors that occur from [GenerativeModel]. */
 sealed class GoogleGenerativeAIException(message: String, cause: Throwable? = null) :
@@ -39,6 +40,10 @@ sealed class GoogleGenerativeAIException(message: String, cause: Throwable? = nu
                         "Something went wrong while trying to deserialize a response from the server.",
                         cause,
                     )
+
+                is TimeoutCancellationException ->
+                    RequestTimeoutException("The request failed to complete in the allotted time.")
+
                 else -> UnknownException("Something unexpected happened.", cause)
             }
     }
@@ -50,6 +55,10 @@ class SerializationException(message: String, cause: Throwable? = null) :
 
 /** The server responded with a non 200 response code. */
 class ServerException(message: String, cause: Throwable? = null) :
+    GoogleGenerativeAIException(message, cause)
+
+/** The server responded that the API Key is no valid. */
+class InvalidAPIKeyException(message: String, cause: Throwable? = null) :
     GoogleGenerativeAIException(message, cause)
 
 /**
@@ -64,6 +73,16 @@ class PromptBlockedException(val response: GenerateContentResponse, cause: Throw
         "Prompt was blocked: ${response.promptFeedback?.blockReason?.name}",
         cause,
     )
+
+/**
+ * The user's location (region) is not supported by the API.
+ *
+ * See the Google documentation for a
+ * [list of regions](https://ai.google.dev/available_regions#available_regions) (countries and
+ * territories) where the API is available.
+ */
+class UnsupportedUserLocationException(cause: Throwable? = null) :
+    GoogleGenerativeAIException("User location is not supported for the API use.", cause)
 
 /**
  * Some form of state occurred that shouldn't have.
@@ -83,6 +102,14 @@ class ResponseStoppedException(val response: GenerateContentResponse, cause: Thr
         "Content generation stopped. Reason: ${response.candidates.first().finishReason?.name}",
         cause,
     )
+
+/**
+ * A request took too long to complete.
+ *
+ * Usually occurs due to a user specified [timeout][RequestOptions.timeout].
+ */
+class RequestTimeoutException(message: String, cause: Throwable? = null) :
+    GoogleGenerativeAIException(message, cause)
 
 /** Catch all case for exceptions not explicitly expected. */
 class UnknownException(message: String, cause: Throwable? = null) :

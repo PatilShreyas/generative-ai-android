@@ -28,6 +28,7 @@ import dev.shreyaspatil.ai.client.generativeai.type.GenerationConfig
 import dev.shreyaspatil.ai.client.generativeai.type.GoogleGenerativeAIException
 import dev.shreyaspatil.ai.client.generativeai.type.PlatformImage
 import dev.shreyaspatil.ai.client.generativeai.type.PromptBlockedException
+import dev.shreyaspatil.ai.client.generativeai.type.RequestOptions
 import dev.shreyaspatil.ai.client.generativeai.type.ResponseStoppedException
 import dev.shreyaspatil.ai.client.generativeai.type.SafetySetting
 import dev.shreyaspatil.ai.client.generativeai.type.SerializationException
@@ -52,6 +53,7 @@ internal constructor(
     val apiKey: String,
     val generationConfig: GenerationConfig? = null,
     val safetySettings: List<SafetySetting>? = null,
+    val requestOptions: RequestOptions = RequestOptions(),
     private val controller: APIController,
 ) {
 
@@ -61,7 +63,15 @@ internal constructor(
         apiKey: String,
         generationConfig: GenerationConfig? = null,
         safetySettings: List<SafetySetting>? = null,
-    ) : this(modelName, apiKey, generationConfig, safetySettings, APIController(apiKey, modelName))
+        requestOptions: RequestOptions = RequestOptions(),
+    ) : this(
+        modelName,
+        apiKey,
+        generationConfig,
+        safetySettings,
+        requestOptions,
+        APIController(apiKey, modelName, requestOptions),
+    )
 
     /**
      * Generates a response from the backend with the provided [Content]s.
