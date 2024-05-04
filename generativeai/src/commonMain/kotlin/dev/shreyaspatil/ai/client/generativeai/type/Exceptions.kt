@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Shreyas Patil
+ * Copyright 2023 Shreyas Patil
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package dev.shreyaspatil.ai.client.generativeai.type
 
 import dev.shreyaspatil.ai.client.generativeai.GenerativeModel
-import io.ktor.serialization.JsonConvertException
+import dev.shreyaspatil.ai.client.generativeai.internal.util.toPublic
 import kotlinx.coroutines.TimeoutCancellationException
 
 /** Parent class for any errors that occur from [GenerativeModel]. */
 sealed class GoogleGenerativeAIException(message: String, cause: Throwable? = null) :
     RuntimeException(message, cause) {
+
     companion object {
 
         /**
@@ -33,17 +34,32 @@ sealed class GoogleGenerativeAIException(message: String, cause: Throwable? = nu
         fun from(cause: Throwable): GoogleGenerativeAIException =
             when (cause) {
                 is GoogleGenerativeAIException -> cause
-                is JsonConvertException,
-                is kotlinx.serialization.SerializationException,
-                ->
-                    SerializationException(
-                        "Something went wrong while trying to deserialize a response from the server.",
-                        cause,
-                    )
-
+                is dev.shreyaspatil.ai.client.generativeai.common.GoogleGenerativeAIException ->
+                    when (cause) {
+                        is dev.shreyaspatil.ai.client.generativeai.common.SerializationException ->
+                            SerializationException(cause.message ?: "", cause.cause)
+                        is dev.shreyaspatil.ai.client.generativeai.common.ServerException ->
+                            ServerException(cause.message ?: "", cause.cause)
+                        is dev.shreyaspatil.ai.client.generativeai.common.InvalidAPIKeyException ->
+                            InvalidAPIKeyException(cause.message ?: "")
+                        is dev.shreyaspatil.ai.client.generativeai.common.PromptBlockedException ->
+                            PromptBlockedException(cause.response.toPublic(), cause.cause)
+                        is dev.shreyaspatil.ai.client.generativeai.common.UnsupportedUserLocationException ->
+                            UnsupportedUserLocationException(cause.cause)
+                        is dev.shreyaspatil.ai.client.generativeai.common.InvalidStateException ->
+                            InvalidStateException(cause.message ?: "", cause)
+                        is dev.shreyaspatil.ai.client.generativeai.common.ResponseStoppedException ->
+                            ResponseStoppedException(cause.response.toPublic(), cause.cause)
+                        is dev.shreyaspatil.ai.client.generativeai.common.RequestTimeoutException ->
+                            RequestTimeoutException(cause.message ?: "", cause.cause)
+                        is dev.shreyaspatil.ai.client.generativeai.common.UnknownException ->
+                            UnknownException(cause.message ?: "", cause.cause)
+                        is dev.shreyaspatil.ai.client.generativeai.common.QuotaExceededException ->
+                            QuotaExceededException(cause.message ?: "", cause.cause)
+                        else -> UnknownException(cause.message ?: "", cause)
+                    }
                 is TimeoutCancellationException ->
                     RequestTimeoutException("The request failed to complete in the allotted time.")
-
                 else -> UnknownException("Something unexpected happened.", cause)
             }
     }
@@ -68,6 +84,7 @@ class InvalidAPIKeyException(message: String, cause: Throwable? = null) :
  *
  * @property response the full server response for the request.
  */
+// TODO(rlazo): Add secondary constructor to pass through the message?
 class PromptBlockedException(val response: GenerateContentResponse, cause: Throwable? = null) :
     GoogleGenerativeAIException(
         "Prompt was blocked: ${response.promptFeedback?.blockReason?.name}",
@@ -81,6 +98,7 @@ class PromptBlockedException(val response: GenerateContentResponse, cause: Throw
  * [list of regions](https://ai.google.dev/available_regions#available_regions) (countries and
  * territories) where the API is available.
  */
+// TODO(rlazo): Add secondary constructor to pass through the message?
 class UnsupportedUserLocationException(cause: Throwable? = null) :
     GoogleGenerativeAIException("User location is not supported for the API use.", cause)
 
@@ -109,6 +127,10 @@ class ResponseStoppedException(val response: GenerateContentResponse, cause: Thr
  * Usually occurs due to a user specified [timeout][RequestOptions.timeout].
  */
 class RequestTimeoutException(message: String, cause: Throwable? = null) :
+    GoogleGenerativeAIException(message, cause)
+
+/** The quota for this API key is depleted, retry this request at a later time. */
+class QuotaExceededException(message: String, cause: Throwable? = null) :
     GoogleGenerativeAIException(message, cause)
 
 /** Catch all case for exceptions not explicitly expected. */

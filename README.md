@@ -14,7 +14,7 @@ generate text from text-and-image input:
 
 ```kotlin
 val generativeModel = GenerativeModel(
-    modelName = "gemini-1.0-pro-vision-latest",
+    modelName = "gemini-1.5-pro-vision-latest",
     apiKey = "YOUR_API_KEY"
 )
 
@@ -33,7 +33,7 @@ Supports the following Kotlin Multiplatform targets:
 - [x] iOS
 - [x] JVM
 - [x] JS
-- [x] Wasm (_Use this [version](https://github.com/PatilShreyas/generative-ai-kmp/releases/tag/v0.2.0-1.0.0-wasm)_)
+- [x] Wasm (_Use this [version](https://github.com/PatilShreyas/generative-ai-kmp/releases/tag/v0.5.0-1.0.0-wasm)_)
 
 ## Installation and usage
 
@@ -59,7 +59,7 @@ The versioning scheme is of the form `X-Y` where:
 
 X is the _Generative AI  Android SDK_ version that is being tracked.
 Y is the _Multiplatform SDK_ version.
-For example, if _Generative AI  Android SDK_ is on `0.2.2` and _Multiplatform SDK_ is on `1.0.0`, the artifact for a release will be `dev.shreyaspatil.generativeai:generativeai-google:0.2.2-1.0.0`.
+For example, if _Generative AI  Android SDK_ is on `0.5.0` and _Multiplatform SDK_ is on `1.0.0`, the artifact for a release will be `dev.shreyaspatil.generativeai:generativeai-google:0.5.0-1.0.0`.
 
 ## Try sample app
 

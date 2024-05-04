@@ -15,6 +15,7 @@
  */
 
 rootProject.name = "generativeai-kmp"
+include(":common")
 include(":generativeai")
 
 pluginManagement {

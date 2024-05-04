@@ -24,3 +24,5 @@ open class PlatformImage(val data: ByteArray) {
         return Base64.encode(data)
     }
 }
+
+typealias Bitmap = PlatformImage

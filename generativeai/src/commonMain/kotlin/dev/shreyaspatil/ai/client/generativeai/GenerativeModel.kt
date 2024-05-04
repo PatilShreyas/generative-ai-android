@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Shreyas Patil
+ * Copyright 2023 Shreyas Patil
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,38 @@
  */
 package dev.shreyaspatil.ai.client.generativeai
 
-import dev.shreyaspatil.ai.client.generativeai.internal.api.APIController
-import dev.shreyaspatil.ai.client.generativeai.internal.api.CountTokensRequest
-import dev.shreyaspatil.ai.client.generativeai.internal.api.GenerateContentRequest
+import dev.shreyaspatil.ai.client.generativeai.common.APIController
+import dev.shreyaspatil.ai.client.generativeai.common.CountTokensRequest
+import dev.shreyaspatil.ai.client.generativeai.common.GenerateContentRequest
 import dev.shreyaspatil.ai.client.generativeai.internal.util.toInternal
 import dev.shreyaspatil.ai.client.generativeai.internal.util.toPublic
+import dev.shreyaspatil.ai.client.generativeai.type.Bitmap
 import dev.shreyaspatil.ai.client.generativeai.type.Content
 import dev.shreyaspatil.ai.client.generativeai.type.CountTokensResponse
 import dev.shreyaspatil.ai.client.generativeai.type.FinishReason
+import dev.shreyaspatil.ai.client.generativeai.type.FourParameterFunction
+import dev.shreyaspatil.ai.client.generativeai.type.FunctionCallPart
 import dev.shreyaspatil.ai.client.generativeai.type.GenerateContentResponse
 import dev.shreyaspatil.ai.client.generativeai.type.GenerationConfig
 import dev.shreyaspatil.ai.client.generativeai.type.GoogleGenerativeAIException
-import dev.shreyaspatil.ai.client.generativeai.type.PlatformImage
+import dev.shreyaspatil.ai.client.generativeai.type.InvalidStateException
+import dev.shreyaspatil.ai.client.generativeai.type.NoParameterFunction
+import dev.shreyaspatil.ai.client.generativeai.type.OneParameterFunction
 import dev.shreyaspatil.ai.client.generativeai.type.PromptBlockedException
 import dev.shreyaspatil.ai.client.generativeai.type.RequestOptions
 import dev.shreyaspatil.ai.client.generativeai.type.ResponseStoppedException
 import dev.shreyaspatil.ai.client.generativeai.type.SafetySetting
 import dev.shreyaspatil.ai.client.generativeai.type.SerializationException
+import dev.shreyaspatil.ai.client.generativeai.type.ThreeParameterFunction
+import dev.shreyaspatil.ai.client.generativeai.type.Tool
+import dev.shreyaspatil.ai.client.generativeai.type.ToolConfig
+import dev.shreyaspatil.ai.client.generativeai.type.TwoParameterFunction
 import dev.shreyaspatil.ai.client.generativeai.type.content
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-import kotlin.jvm.JvmOverloads
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.JsonObject
 
 /**
  * A facilitator for a given multimodal model (eg; Gemini).
@@ -46,31 +56,46 @@ import kotlin.jvm.JvmOverloads
  * @property generationConfig configuration parameters to use for content generation
  * @property safetySettings the safety bounds to use during alongside prompts during content
  *   generation
+ * @property systemInstruction contains a [Content] that directs the model to behave a certain way
+ * @property requestOptions configuration options to utilize during backend communication
  */
+@OptIn(ExperimentalSerializationApi::class)
 class GenerativeModel
 internal constructor(
     val modelName: String,
     val apiKey: String,
     val generationConfig: GenerationConfig? = null,
     val safetySettings: List<SafetySetting>? = null,
+    val tools: List<Tool>? = null,
+    val toolConfig: ToolConfig? = null,
+    val systemInstruction: Content? = null,
     val requestOptions: RequestOptions = RequestOptions(),
     private val controller: APIController,
 ) {
-
-    @JvmOverloads
     constructor(
         modelName: String,
         apiKey: String,
         generationConfig: GenerationConfig? = null,
         safetySettings: List<SafetySetting>? = null,
         requestOptions: RequestOptions = RequestOptions(),
+        tools: List<Tool>? = null,
+        toolConfig: ToolConfig? = null,
+        systemInstruction: Content? = null,
     ) : this(
         modelName,
         apiKey,
         generationConfig,
         safetySettings,
+        tools,
+        toolConfig,
+        systemInstruction?.let { Content("system", it.parts) },
         requestOptions,
-        APIController(apiKey, modelName, requestOptions),
+        APIController(
+            apiKey,
+            modelName,
+            requestOptions.toInternal(),
+            "genai-android",
+        ),
     )
 
     /**
@@ -96,8 +121,8 @@ internal constructor(
     fun generateContentStream(vararg prompt: Content): Flow<GenerateContentResponse> =
         controller
             .generateContentStream(constructRequest(*prompt))
-            .map { it.toPublic().validate() }
             .catch { throw GoogleGenerativeAIException.from(it) }
+            .map { it.toPublic().validate() }
 
     /**
      * Generates a response from the backend with the provided text represented [Content].
@@ -125,7 +150,7 @@ internal constructor(
      * @return A [GenerateContentResponse] after some delay. Function should be called within a
      *   suspend context to properly manage concurrency.
      */
-    suspend fun generateContent(prompt: PlatformImage): GenerateContentResponse =
+    suspend fun generateContent(prompt: Bitmap): GenerateContentResponse =
         generateContent(content { image(prompt) })
 
     /**
@@ -134,11 +159,12 @@ internal constructor(
      * @param prompt The bitmap to be converted into a single piece of [Content] to send to the model.
      * @return A [Flow] which will emit responses as they are returned from the model.
      */
-    fun generateContentStream(prompt: PlatformImage): Flow<GenerateContentResponse> =
+    fun generateContentStream(prompt: Bitmap): Flow<GenerateContentResponse> =
         generateContentStream(content { image(prompt) })
 
     /** Creates a chat instance which internally tracks the ongoing conversation with the model */
-    fun startChat(history: List<Content> = emptyList()): Chat = Chat(this, history.toMutableList())
+    fun startChat(history: List<Content> = emptyList()): dev.shreyaspatil.ai.client.generativeai.Chat =
+        dev.shreyaspatil.ai.client.generativeai.Chat(this, history.toMutableList())
 
     /**
      * Counts the number of tokens used in a prompt.
@@ -166,8 +192,38 @@ internal constructor(
      * @param prompt The image to be converted to a single piece of [Content] to count the tokens of.
      * @return A [CountTokensResponse] containing the number of tokens in the prompt.
      */
-    suspend fun countTokens(prompt: PlatformImage): CountTokensResponse {
+    suspend fun countTokens(prompt: Bitmap): CountTokensResponse {
         return countTokens(content { image(prompt) })
+    }
+
+    /**
+     * Executes a function requested by the model.
+     *
+     * @param functionCallPart A [FunctionCallPart] from the model, containing a function call and
+     *   parameters
+     * @return The output of the requested function call
+     */
+    suspend fun executeFunction(functionCallPart: FunctionCallPart): JsonObject {
+        if (tools == null) {
+            throw InvalidStateException("No registered tools")
+        }
+        val callable =
+            tools.flatMap { it.functionDeclarations }.firstOrNull { it.name == functionCallPart.name }
+                ?: throw InvalidStateException("No registered function named ${functionCallPart.name}")
+        return when (callable) {
+            is NoParameterFunction -> callable.execute()
+            is OneParameterFunction<*> ->
+                (callable as OneParameterFunction<Any?>).execute(functionCallPart)
+            is TwoParameterFunction<*, *> ->
+                (callable as TwoParameterFunction<Any?, Any?>).execute(functionCallPart)
+            is ThreeParameterFunction<*, *, *> ->
+                (callable as ThreeParameterFunction<Any?, Any?, Any?>).execute(functionCallPart)
+            is FourParameterFunction<*, *, *, *> ->
+                (callable as FourParameterFunction<Any?, Any?, Any?, Any?>).execute(functionCallPart)
+            else -> {
+                throw RuntimeException("UNREACHABLE")
+            }
+        }
     }
 
     private fun constructRequest(vararg prompt: Content) =
@@ -176,6 +232,9 @@ internal constructor(
             prompt.map { it.toInternal() },
             safetySettings?.map { it.toInternal() },
             generationConfig?.toInternal(),
+            tools?.map { it.toInternal() },
+            toolConfig?.toInternal(),
+            systemInstruction?.toInternal(),
         )
 
     private fun constructCountTokensRequest(vararg prompt: Content) =

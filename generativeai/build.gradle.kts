@@ -62,29 +62,15 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.client.serialization.json)
-            implementation(libs.ktor.client.logging)
-
+            implementation(project(":common"))
             implementation(libs.kotlinx.serialization.json)
-
             implementation(libs.kotlinx.coroutines.core)
         }
-        androidMain.dependencies {
-            api(libs.ktor.client.okhttp)
-        }
-        jvmMain.dependencies {
-            api(libs.ktor.client.okhttp)
-            api(libs.slf4j.api)
-        }
-        iosMain.dependencies {
-            api(libs.ktor.client.darwin)
-        }
-        commonTest.dependencies {
+        jvmTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotest.assertions.core)
             implementation(libs.ktor.client.mock)
+            implementation(libs.mockk)
         }
     }
 }

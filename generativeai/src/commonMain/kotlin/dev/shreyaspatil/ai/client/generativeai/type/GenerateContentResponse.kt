@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Shreyas Patil
+ * Copyright 2023 Shreyas Patil
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package dev.shreyaspatil.ai.client.generativeai.type
 
+import dev.shreyaspatil.ai.client.generativeai.common.util.Log
+
 /**
  * Represents a response from the model.
  *
@@ -25,9 +27,16 @@ package dev.shreyaspatil.ai.client.generativeai.type
 class GenerateContentResponse(
     val candidates: List<Candidate>,
     val promptFeedback: PromptFeedback?,
+    val usageMetadata: UsageMetadata?,
 ) {
     /** Convenience field representing the first text part in the response, if it exists. */
     val text: String? by lazy { firstPartAs<TextPart>()?.text }
+
+    /** Convenience field representing the first text part in the response, if it exists. */
+    val functionCall: FunctionCallPart? by lazy { firstPartAs() }
+
+    /** Convenience field representing the first text part in the response, if it exists. */
+    val functionResponse: FunctionResponsePart? by lazy { firstPartAs() }
 
     private inline fun <reified T : Part> firstPartAs(): T? {
         if (candidates.isEmpty()) {
@@ -58,6 +67,6 @@ class GenerateContentResponse(
     }
 
     private fun warn(message: String) {
-        dev.shreyaspatil.ai.client.generativeai.platform.Log.w("GenerateContentResponse", message)
+        Log.w("GenerateContentResponse", message)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Shreyas Patil
+ * Copyright 2023 Shreyas Patil
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,46 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(ExperimentalEncodingApi::class, ExperimentalEncodingApi::class)
-
 package dev.shreyaspatil.ai.client.generativeai.internal.util
 
-import dev.shreyaspatil.ai.client.generativeai.internal.api.CountTokensResponse
-import dev.shreyaspatil.ai.client.generativeai.internal.api.GenerateContentResponse
-import dev.shreyaspatil.ai.client.generativeai.internal.api.client.GenerationConfig
-import dev.shreyaspatil.ai.client.generativeai.internal.api.server.BlockReason
-import dev.shreyaspatil.ai.client.generativeai.internal.api.server.Candidate
-import dev.shreyaspatil.ai.client.generativeai.internal.api.server.CitationSources
-import dev.shreyaspatil.ai.client.generativeai.internal.api.server.FinishReason
-import dev.shreyaspatil.ai.client.generativeai.internal.api.server.HarmProbability
-import dev.shreyaspatil.ai.client.generativeai.internal.api.server.PromptFeedback
-import dev.shreyaspatil.ai.client.generativeai.internal.api.server.SafetyRating
-import dev.shreyaspatil.ai.client.generativeai.internal.api.shared.Blob
-import dev.shreyaspatil.ai.client.generativeai.internal.api.shared.BlobPart
-import dev.shreyaspatil.ai.client.generativeai.internal.api.shared.Content
-import dev.shreyaspatil.ai.client.generativeai.internal.api.shared.HarmBlockThreshold
-import dev.shreyaspatil.ai.client.generativeai.internal.api.shared.HarmCategory
-import dev.shreyaspatil.ai.client.generativeai.internal.api.shared.Part
-import dev.shreyaspatil.ai.client.generativeai.internal.api.shared.SafetySetting
-import dev.shreyaspatil.ai.client.generativeai.internal.api.shared.TextPart
+import dev.shreyaspatil.ai.client.generativeai.common.CountTokensResponse
+import dev.shreyaspatil.ai.client.generativeai.common.GenerateContentResponse
+import dev.shreyaspatil.ai.client.generativeai.common.RequestOptions
+import dev.shreyaspatil.ai.client.generativeai.common.client.GenerationConfig
+import dev.shreyaspatil.ai.client.generativeai.common.client.Schema
+import dev.shreyaspatil.ai.client.generativeai.common.server.BlockReason
+import dev.shreyaspatil.ai.client.generativeai.common.server.Candidate
+import dev.shreyaspatil.ai.client.generativeai.common.server.CitationSources
+import dev.shreyaspatil.ai.client.generativeai.common.server.FinishReason
+import dev.shreyaspatil.ai.client.generativeai.common.server.HarmProbability
+import dev.shreyaspatil.ai.client.generativeai.common.server.PromptFeedback
+import dev.shreyaspatil.ai.client.generativeai.common.server.SafetyRating
+import dev.shreyaspatil.ai.client.generativeai.common.shared.Blob
+import dev.shreyaspatil.ai.client.generativeai.common.shared.BlobPart
+import dev.shreyaspatil.ai.client.generativeai.common.shared.Content
+import dev.shreyaspatil.ai.client.generativeai.common.shared.FileData
+import dev.shreyaspatil.ai.client.generativeai.common.shared.FileDataPart
+import dev.shreyaspatil.ai.client.generativeai.common.shared.FunctionCall
+import dev.shreyaspatil.ai.client.generativeai.common.shared.FunctionCallPart
+import dev.shreyaspatil.ai.client.generativeai.common.shared.FunctionResponse
+import dev.shreyaspatil.ai.client.generativeai.common.shared.FunctionResponsePart
+import dev.shreyaspatil.ai.client.generativeai.common.shared.HarmBlockThreshold
+import dev.shreyaspatil.ai.client.generativeai.common.shared.HarmCategory
+import dev.shreyaspatil.ai.client.generativeai.common.shared.Part
+import dev.shreyaspatil.ai.client.generativeai.common.shared.SafetySetting
+import dev.shreyaspatil.ai.client.generativeai.common.shared.TextPart
+import dev.shreyaspatil.ai.client.generativeai.type.Bitmap
 import dev.shreyaspatil.ai.client.generativeai.type.BlockThreshold
 import dev.shreyaspatil.ai.client.generativeai.type.CitationMetadata
+import dev.shreyaspatil.ai.client.generativeai.type.FunctionCallingConfig
+import dev.shreyaspatil.ai.client.generativeai.type.FunctionDeclaration
 import dev.shreyaspatil.ai.client.generativeai.type.ImagePart
-import dev.shreyaspatil.ai.client.generativeai.type.PlatformImage
 import dev.shreyaspatil.ai.client.generativeai.type.SerializationException
+import dev.shreyaspatil.ai.client.generativeai.type.Tool
+import dev.shreyaspatil.ai.client.generativeai.type.ToolConfig
+import dev.shreyaspatil.ai.client.generativeai.type.UsageMetadata
 import dev.shreyaspatil.ai.client.generativeai.type.content
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
+internal fun dev.shreyaspatil.ai.client.generativeai.type.RequestOptions.toInternal() =
+    RequestOptions(timeout, apiVersion)
+
 internal fun dev.shreyaspatil.ai.client.generativeai.type.Content.toInternal() =
     Content(this.role, this.parts.map { it.toInternal() })
 
+@OptIn(ExperimentalEncodingApi::class)
 internal fun dev.shreyaspatil.ai.client.generativeai.type.Part.toInternal(): Part {
     return when (this) {
         is dev.shreyaspatil.ai.client.generativeai.type.TextPart -> TextPart(text)
         is ImagePart -> BlobPart(Blob("image/png", image.asBase64()))
         is dev.shreyaspatil.ai.client.generativeai.type.BlobPart ->
             BlobPart(Blob(mimeType, Base64.Mime.encode(blob)))
+
+        is dev.shreyaspatil.ai.client.generativeai.type.FunctionCallPart ->
+            FunctionCallPart(FunctionCall(name, args.orEmpty()))
+
+        is dev.shreyaspatil.ai.client.generativeai.type.FunctionResponsePart ->
+            FunctionResponsePart(FunctionResponse(name, response))
+
+        is dev.shreyaspatil.ai.client.generativeai.type.FileDataPart ->
+            FileDataPart(FileData(fileUri = uri, mimeType = mimeType))
+
         else ->
             throw SerializationException(
                 "The given subclass of Part ($this) is not supported in the serialization yet.",
@@ -76,12 +101,13 @@ internal fun dev.shreyaspatil.ai.client.generativeai.type.GenerationConfig.toInt
 internal fun dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.toInternal() =
     when (this) {
         dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.HARASSMENT -> HarmCategory.HARASSMENT
-        dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.HATE_SPEECH ->
-            HarmCategory.HATE_SPEECH
+        dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.HATE_SPEECH -> HarmCategory.HATE_SPEECH
         dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.SEXUALLY_EXPLICIT ->
             HarmCategory.SEXUALLY_EXPLICIT
+
         dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.DANGEROUS_CONTENT ->
             HarmCategory.DANGEROUS_CONTENT
+
         dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.UNKNOWN -> HarmCategory.UNKNOWN
     }
 
@@ -93,6 +119,50 @@ internal fun BlockThreshold.toInternal() =
         BlockThreshold.LOW_AND_ABOVE -> HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
         BlockThreshold.UNSPECIFIED -> HarmBlockThreshold.UNSPECIFIED
     }
+
+internal fun Tool.toInternal() =
+    dev.shreyaspatil.ai.client.generativeai.common.client.Tool(functionDeclarations.map { it.toInternal() })
+
+internal fun ToolConfig.toInternal() =
+    dev.shreyaspatil.ai.client.generativeai.common.client.ToolConfig(
+        dev.shreyaspatil.ai.client.generativeai.common.client.FunctionCallingConfig(
+            when (functionCallingConfig.mode) {
+                FunctionCallingConfig.Mode.ANY ->
+                    dev.shreyaspatil.ai.client.generativeai.common.client.FunctionCallingConfig.Mode.ANY
+
+                FunctionCallingConfig.Mode.AUTO ->
+                    dev.shreyaspatil.ai.client.generativeai.common.client.FunctionCallingConfig.Mode.AUTO
+
+                FunctionCallingConfig.Mode.NONE ->
+                    dev.shreyaspatil.ai.client.generativeai.common.client.FunctionCallingConfig.Mode.NONE
+            },
+        ),
+    )
+
+internal fun dev.shreyaspatil.ai.client.generativeai.common.UsageMetadata.toPublic(): UsageMetadata =
+    UsageMetadata(promptTokenCount ?: 0, candidatesTokenCount ?: 0, totalTokenCount ?: 0)
+
+internal fun FunctionDeclaration.toInternal() =
+    dev.shreyaspatil.ai.client.generativeai.common.client.FunctionDeclaration(
+        name,
+        description,
+        Schema(
+            properties = getParameters().associate { it.name to it.toInternal() },
+            required = getParameters().map { it.name },
+            type = "OBJECT",
+        ),
+    )
+
+internal fun <T> dev.shreyaspatil.ai.client.generativeai.type.Schema<T>.toInternal(): Schema =
+    Schema(
+        type.name,
+        description,
+        format,
+        enum,
+        properties?.mapValues { it.value.toInternal() },
+        required,
+        items?.toInternal(),
+    )
 
 internal fun Candidate.toPublic(): dev.shreyaspatil.ai.client.generativeai.type.Candidate {
     val safetyRatings = safetyRatings?.map { it.toPublic() }.orEmpty()
@@ -117,11 +187,34 @@ internal fun Part.toPublic(): dev.shreyaspatil.ai.client.generativeai.type.Part 
         is BlobPart -> {
             val data = Base64.decode(inlineData.data)
             if (inlineData.mimeType.contains("image")) {
-                ImagePart(PlatformImage(data))
+                ImagePart(Bitmap(data))
             } else {
                 dev.shreyaspatil.ai.client.generativeai.type.BlobPart(inlineData.mimeType, data)
             }
         }
+
+        is FunctionCallPart ->
+            dev.shreyaspatil.ai.client.generativeai.type.FunctionCallPart(
+                functionCall.name,
+                functionCall.args.orEmpty(),
+            )
+
+        is FunctionResponsePart ->
+            dev.shreyaspatil.ai.client.generativeai.type.FunctionResponsePart(
+                functionResponse.name,
+                functionResponse.response,
+            )
+
+        is FileDataPart ->
+            dev.shreyaspatil.ai.client.generativeai.type.FileDataPart(
+                fileData.fileUri,
+                fileData.mimeType,
+            )
+
+        else ->
+            throw SerializationException(
+                "Unsupported part type \"${this}\" provided. This model may not be supported by this SDK.",
+            )
     }
 }
 
@@ -150,20 +243,20 @@ internal fun FinishReason?.toPublic() =
         FinishReason.SAFETY -> dev.shreyaspatil.ai.client.generativeai.type.FinishReason.SAFETY
         FinishReason.STOP -> dev.shreyaspatil.ai.client.generativeai.type.FinishReason.STOP
         FinishReason.OTHER -> dev.shreyaspatil.ai.client.generativeai.type.FinishReason.OTHER
-        FinishReason.UNSPECIFIED ->
-            dev.shreyaspatil.ai.client.generativeai.type.FinishReason.UNSPECIFIED
+        FinishReason.UNSPECIFIED -> dev.shreyaspatil.ai.client.generativeai.type.FinishReason.UNSPECIFIED
         FinishReason.UNKNOWN -> dev.shreyaspatil.ai.client.generativeai.type.FinishReason.UNKNOWN
     }
 
 internal fun HarmCategory.toPublic() =
     when (this) {
         HarmCategory.HARASSMENT -> dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.HARASSMENT
-        HarmCategory.HATE_SPEECH ->
-            dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.HATE_SPEECH
+        HarmCategory.HATE_SPEECH -> dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.HATE_SPEECH
         HarmCategory.SEXUALLY_EXPLICIT ->
             dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.SEXUALLY_EXPLICIT
+
         HarmCategory.DANGEROUS_CONTENT ->
             dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.DANGEROUS_CONTENT
+
         HarmCategory.UNKNOWN -> dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.UNKNOWN
     }
 
@@ -172,10 +265,10 @@ internal fun HarmProbability.toPublic() =
         HarmProbability.HIGH -> dev.shreyaspatil.ai.client.generativeai.type.HarmProbability.HIGH
         HarmProbability.MEDIUM -> dev.shreyaspatil.ai.client.generativeai.type.HarmProbability.MEDIUM
         HarmProbability.LOW -> dev.shreyaspatil.ai.client.generativeai.type.HarmProbability.LOW
-        HarmProbability.NEGLIGIBLE ->
-            dev.shreyaspatil.ai.client.generativeai.type.HarmProbability.NEGLIGIBLE
+        HarmProbability.NEGLIGIBLE -> dev.shreyaspatil.ai.client.generativeai.type.HarmProbability.NEGLIGIBLE
         HarmProbability.UNSPECIFIED ->
             dev.shreyaspatil.ai.client.generativeai.type.HarmProbability.UNSPECIFIED
+
         HarmProbability.UNKNOWN -> dev.shreyaspatil.ai.client.generativeai.type.HarmProbability.UNKNOWN
     }
 
@@ -191,6 +284,7 @@ internal fun GenerateContentResponse.toPublic() =
     dev.shreyaspatil.ai.client.generativeai.type.GenerateContentResponse(
         candidates?.map { it.toPublic() }.orEmpty(),
         promptFeedback?.toPublic(),
+        usageMetadata?.toPublic(),
     )
 
 internal fun CountTokensResponse.toPublic() =

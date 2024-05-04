@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Shreyas Patil
+ * Copyright 2023 Shreyas Patil
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package dev.shreyaspatil.ai.client.generativeai
 
+import dev.shreyaspatil.ai.client.generativeai.type.Bitmap
 import dev.shreyaspatil.ai.client.generativeai.type.BlobPart
 import dev.shreyaspatil.ai.client.generativeai.type.Content
 import dev.shreyaspatil.ai.client.generativeai.type.GenerateContentResponse
 import dev.shreyaspatil.ai.client.generativeai.type.ImagePart
 import dev.shreyaspatil.ai.client.generativeai.type.InvalidStateException
-import dev.shreyaspatil.ai.client.generativeai.type.PlatformImage
 import dev.shreyaspatil.ai.client.generativeai.type.TextPart
 import dev.shreyaspatil.ai.client.generativeai.type.content
 import kotlinx.coroutines.flow.Flow
@@ -40,8 +40,7 @@ import kotlinx.coroutines.sync.Semaphore
  * @param model the model to use for the interaction
  * @property history the previous interactions with the model
  */
-class Chat(private val model: GenerativeModel, val history: MutableList<Content> = ArrayList()) {
-
+class Chat(private val model: dev.shreyaspatil.ai.client.generativeai.GenerativeModel, val history: MutableList<Content> = ArrayList()) {
     private var lock = Semaphore(1)
 
     /**
@@ -82,7 +81,7 @@ class Chat(private val model: GenerativeModel, val history: MutableList<Content>
      * @param prompt The image to be converted into a single piece of [Content] to send to the model.
      * @throws InvalidStateException if the [Chat] instance has an active request.
      */
-    suspend fun sendMessage(prompt: PlatformImage): GenerateContentResponse {
+    suspend fun sendMessage(prompt: Bitmap): GenerateContentResponse {
         val content = content { image(prompt) }
         return sendMessage(content)
     }
@@ -100,7 +99,7 @@ class Chat(private val model: GenerativeModel, val history: MutableList<Content>
         attemptLock()
 
         val flow = model.generateContentStream(*history.toTypedArray(), prompt)
-        val bitmaps = LinkedHashSet<PlatformImage>()
+        val bitmaps = LinkedHashSet<Bitmap>()
         val blobs = LinkedHashSet<BlobPart>()
         val text = StringBuilder()
 
@@ -160,9 +159,15 @@ class Chat(private val model: GenerativeModel, val history: MutableList<Content>
      * @return A [Flow] which will emit responses as they are returned from the model.
      * @throws InvalidStateException if the [Chat] instance has an active request.
      */
-    fun sendMessageStream(prompt: PlatformImage): Flow<GenerateContentResponse> {
+    fun sendMessageStream(prompt: Bitmap): Flow<GenerateContentResponse> {
         val content = content { image(prompt) }
         return sendMessageStream(content)
+    }
+
+    private fun Content.assertComesFromUser() {
+        if (role !in listOf("user", "function")) {
+            throw InvalidStateException("Chat prompts should come from the 'user' or 'function' role.")
+        }
     }
 
     private fun attemptLock() {
@@ -171,12 +176,6 @@ class Chat(private val model: GenerativeModel, val history: MutableList<Content>
                 "This chat instance currently has an ongoing request, please wait for it to complete " +
                     "before sending more messages",
             )
-        }
-    }
-
-    private fun Content.assertComesFromUser() {
-        if (role != "user") {
-            throw InvalidStateException("Chat prompts should come from the 'user' role.")
         }
     }
 }

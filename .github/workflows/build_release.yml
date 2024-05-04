@@ -34,12 +34,7 @@ jobs:
       - name: Publish Library
         run: |
           echo "Publishing library🚀"
-          ./gradlew :generativeai:publish --no-configuration-cache
-          echo "Published Library✅"
-
-          echo "Releasing library...🚀"
-          ./gradlew :generativeai:closeAndReleaseRepository --no-configuration-cache
-          echo "Released Library✅"
+          ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
         env:
           ORG_GRADLE_PROJECT_VERSION_NAME: ${{ github.event.inputs.versionName }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY }}

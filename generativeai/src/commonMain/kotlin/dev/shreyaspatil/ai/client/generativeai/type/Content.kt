@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Shreyas Patil
+ * Copyright 2023 Shreyas Patil
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package dev.shreyaspatil.ai.client.generativeai.type
 
 import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
 
 /**
  * Represents content sent to and received from the model.
@@ -25,7 +24,7 @@ import kotlin.jvm.JvmOverloads
  *
  * @see content
  */
-class Content @JvmOverloads constructor(val role: String? = "user", val parts: List<Part>) {
+class Content constructor(val role: String? = "user", val parts: List<Part>) {
 
     class Builder {
         var role: String? = "user"
@@ -42,7 +41,13 @@ class Content @JvmOverloads constructor(val role: String? = "user", val parts: L
         fun blob(mimeType: String, blob: ByteArray) = part(BlobPart(mimeType, blob))
 
         @JvmName("addImage")
-        fun image(image: PlatformImage) = part(ImagePart(image))
+        fun image(image: Bitmap) = part(ImagePart(image))
+
+        @JvmName("addImage")
+        fun image(image: ByteArray) = part(ImagePart(Bitmap(image)))
+
+        @JvmName("addFileData")
+        fun fileData(uri: String, mimeType: String) = part(FileDataPart(uri, mimeType))
 
         fun build(): Content = Content(role, parts)
     }

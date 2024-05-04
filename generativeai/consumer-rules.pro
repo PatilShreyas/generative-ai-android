@@ -1,1 +1,1 @@
--keep class com.google.ai.client.generativeai.internal.** { *; }
+-keep class dev.shreyaspatil.ai.client.generativeai.internal.** { *; }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Shreyas Patil
+ * Copyright 2023 Shreyas Patil
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,10 @@ class SafetyRating(val category: HarmCategory, val probability: HarmProbability)
  * @property license The license under which the cited work is distributed.
  */
 class CitationMetadata(
-    val startIndex: Int,
+    val startIndex: Int = 0,
     val endIndex: Int,
     val uri: String,
-    val license: String,
+    val license: String? = null,
 )
 
 /** The reason for content finishing. */
