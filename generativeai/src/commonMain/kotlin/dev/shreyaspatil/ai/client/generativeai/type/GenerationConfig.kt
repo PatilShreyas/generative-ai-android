@@ -26,40 +26,41 @@ import kotlin.jvm.JvmField
  * @property candidateCount The max *unique* responses to return
  * @property maxOutputTokens The max tokens to generate per response
  * @property stopSequences A list of strings to stop generation on occurrence of
+ * @property responseMimeType Response type for generated candidate text. See the
+ *   [cloud docs](https://cloud.google.com/vertex-ai/docs/reference/rest/v1beta1/GenerationConfig)
+ *   for a list of supported types.
  */
 class GenerationConfig
 private constructor(
-    val temperature: Float?,
-    val topK: Int?,
-    val topP: Float?,
-    val candidateCount: Int?,
-    val maxOutputTokens: Int?,
-    val stopSequences: List<String>?,
+  val temperature: Float?,
+  val topK: Int?,
+  val topP: Float?,
+  val candidateCount: Int?,
+  val maxOutputTokens: Int?,
+  val stopSequences: List<String>?,
+  val responseMimeType: String?
 ) {
 
-    class Builder {
-        @JvmField var temperature: Float? = null
+  class Builder {
+    @JvmField var temperature: Float? = null
+    @JvmField var topK: Int? = null
+    @JvmField var topP: Float? = null
+    @JvmField var candidateCount: Int? = null
+    @JvmField var maxOutputTokens: Int? = null
+    @JvmField var stopSequences: List<String>? = null
+    @JvmField var responseMimeType: String? = null
 
-        @JvmField var topK: Int? = null
-
-        @JvmField var topP: Float? = null
-
-        @JvmField var candidateCount: Int? = null
-
-        @JvmField var maxOutputTokens: Int? = null
-
-        @JvmField var stopSequences: List<String>? = null
-
-        fun build() =
-            GenerationConfig(
-                temperature = temperature,
-                topK = topK,
-                topP = topP,
-                candidateCount = candidateCount,
-                maxOutputTokens = maxOutputTokens,
-                stopSequences = stopSequences,
-            )
-    }
+    fun build() =
+      GenerationConfig(
+        temperature = temperature,
+        topK = topK,
+        topP = topP,
+        candidateCount = candidateCount,
+        maxOutputTokens = maxOutputTokens,
+        stopSequences = stopSequences,
+        responseMimeType = responseMimeType
+      )
+  }
 
     companion object {
         fun builder() = Builder()
