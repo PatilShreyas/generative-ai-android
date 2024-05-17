@@ -79,6 +79,7 @@ private constructor(
  *   candidateCount = 4
  *   maxOutputTokens = 300
  *   stopSequences = listOf("in conclusion", "-----", "do you need")
+ *   responseMimeType = "application/json"
  * }
  * ```
  */
