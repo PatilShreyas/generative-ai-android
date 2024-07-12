@@ -27,6 +27,6 @@ class Tool(
   val codeExecution: JSONObject? = null,
 ) {
   companion object {
-    val CODE_EXECUTION = Tool(codeExecution = JSONObject())
+    @JvmField val CODE_EXECUTION = Tool(codeExecution = JSONObject())
   }
 }
