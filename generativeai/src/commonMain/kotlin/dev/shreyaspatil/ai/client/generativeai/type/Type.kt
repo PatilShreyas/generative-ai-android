@@ -29,11 +29,12 @@ import kotlinx.serialization.json.jsonArray
  */
 class FunctionType<T>(val name: String, val parse: (String?) -> T?) {
   companion object {
-    val STRING = FunctionType<String>("STRING") { it }
-    val INTEGER = FunctionType<Int>("INTEGER") { it?.toIntOrNull() }
-    val LONG = FunctionType<Long>("INTEGER") { it?.toLongOrNull() }
-    val NUMBER = FunctionType<Double>("NUMBER") { it?.toDoubleOrNull() }
-    val BOOLEAN = FunctionType<Boolean>("BOOLEAN") { it?.toBoolean() }
+    @JvmField val STRING = FunctionType<String>("STRING") { it }
+    @JvmField val INTEGER = FunctionType<Int>("INTEGER") { it?.toIntOrNull() }
+    @JvmField val LONG = FunctionType<Long>("INTEGER") { it?.toLongOrNull() }
+    @JvmField val NUMBER = FunctionType<Double>("NUMBER") { it?.toDoubleOrNull() }
+    @JvmField val BOOLEAN = FunctionType<Boolean>("BOOLEAN") { it?.toBoolean() }
+    @JvmField
     val ARRAY =
       FunctionType<List<String>>("ARRAY") { it ->
         it?.let { Json.parseToJsonElement(it).jsonArray.map { element -> element.toString() } }
