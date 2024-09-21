@@ -20,15 +20,15 @@ import dev.shreyaspatil.ai.client.generativeai.common.client.Tool
 import dev.shreyaspatil.ai.client.generativeai.common.client.ToolConfig
 import dev.shreyaspatil.ai.client.generativeai.common.shared.Content
 import dev.shreyaspatil.ai.client.generativeai.common.shared.SafetySetting
+import dev.shreyaspatil.ai.client.generativeai.common.util.fullModelName
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 
 sealed interface Request
 
 @Serializable
 data class GenerateContentRequest(
-    @Transient val model: String? = null,
+    val model: String? = null,
     val contents: List<Content>,
     @SerialName("safety_settings") val safetySettings: List<SafetySetting>? = null,
     @SerialName("generation_config") val generationConfig: GenerationConfig? = null,
@@ -38,5 +38,28 @@ data class GenerateContentRequest(
 ) : Request
 
 @Serializable
-data class CountTokensRequest(@Transient val model: String? = null, val contents: List<Content>) :
-    Request
+data class CountTokensRequest(
+    val generateContentRequest: GenerateContentRequest? = null,
+    val model: String? = null,
+    val contents: List<Content>? = null,
+    val tools: List<Tool>? = null,
+    @SerialName("system_instruction") val systemInstruction: Content? = null,
+) : Request {
+    companion object {
+        fun forGenAI(generateContentRequest: GenerateContentRequest) =
+            CountTokensRequest(
+                generateContentRequest =
+                generateContentRequest.model?.let {
+                    generateContentRequest.copy(model = fullModelName(it))
+                } ?: generateContentRequest,
+            )
+
+        fun forVertexAI(generateContentRequest: GenerateContentRequest) =
+            CountTokensRequest(
+                model = generateContentRequest.model?.let { fullModelName(it) },
+                contents = generateContentRequest.contents,
+                tools = generateContentRequest.tools,
+                systemInstruction = generateContentRequest.systemInstruction,
+            )
+    }
+}

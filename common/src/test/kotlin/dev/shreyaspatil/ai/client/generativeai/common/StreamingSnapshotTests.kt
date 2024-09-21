@@ -26,10 +26,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withTimeout
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
 
 internal class StreamingSnapshotTests {
@@ -71,11 +70,13 @@ internal class StreamingSnapshotTests {
             val responses = apiController.generateContentStream(textGenerateContentRequest("prompt"))
 
             withTimeout(testTimeout) {
-                responses.first {
+                val responseList = responses.toList()
+                responseList.isEmpty() shouldBe false
+                responseList.any {
                     it.candidates?.any {
                         it.safetyRatings?.any { it.category == HarmCategory.UNKNOWN } ?: false
                     } ?: false
-                }
+                } shouldBe true
             }
         }
 

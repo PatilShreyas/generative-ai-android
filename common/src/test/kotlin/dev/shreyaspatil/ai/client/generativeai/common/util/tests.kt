@@ -25,6 +25,8 @@ import dev.shreyaspatil.ai.client.generativeai.common.RequestOptions
 import dev.shreyaspatil.ai.client.generativeai.common.server.Candidate
 import dev.shreyaspatil.ai.client.generativeai.common.shared.Content
 import dev.shreyaspatil.ai.client.generativeai.common.shared.TextPart
+import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
@@ -102,17 +104,22 @@ internal fun commonTest(
     block: CommonTest,
 ) = doBlocking {
     val channel = ByteChannel(autoFlush = true)
-    val mockEngine = MockEngine {
-        respond(channel, status, headersOf(HttpHeaders.ContentType, "application/json"))
-    }
     val apiController =
         APIController(
             "super_cool_test_key",
             "gemini-pro",
             requestOptions,
-            mockEngine,
             TEST_CLIENT_ID,
             null,
+            MockEngine {
+                respond(
+                    channel,
+                    status,
+                    headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            },
+            channel,
+            status,
         )
     CommonTestScope(channel, apiController).block()
 }
@@ -183,3 +190,14 @@ internal fun loadGoldenFile(path: String): File = loadResourceFile("golden-files
 
 /** Loads a file from the test resources directory. */
 internal fun loadResourceFile(path: String) = File("src/test/resources/$path")
+
+/**
+ * Ensures that a collection is neither null or empty.
+ *
+ * Syntax sugar for [shouldNotBeNull] and [shouldNotBeEmpty].
+ */
+inline fun <reified T : Any> Collection<T>?.shouldNotBeNullOrEmpty(): Collection<T> {
+    shouldNotBeNull()
+    shouldNotBeEmpty()
+    return this
+}

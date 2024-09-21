@@ -18,35 +18,29 @@ package dev.shreyaspatil.ai.client.generativeai
 import dev.shreyaspatil.ai.client.generativeai.common.APIController
 import dev.shreyaspatil.ai.client.generativeai.common.CountTokensRequest
 import dev.shreyaspatil.ai.client.generativeai.common.GenerateContentRequest
+import dev.shreyaspatil.ai.client.generativeai.common.util.fullModelName
 import dev.shreyaspatil.ai.client.generativeai.internal.util.toInternal
 import dev.shreyaspatil.ai.client.generativeai.internal.util.toPublic
 import dev.shreyaspatil.ai.client.generativeai.type.Bitmap
 import dev.shreyaspatil.ai.client.generativeai.type.Content
 import dev.shreyaspatil.ai.client.generativeai.type.CountTokensResponse
 import dev.shreyaspatil.ai.client.generativeai.type.FinishReason
-import dev.shreyaspatil.ai.client.generativeai.type.FourParameterFunction
-import dev.shreyaspatil.ai.client.generativeai.type.FunctionCallPart
 import dev.shreyaspatil.ai.client.generativeai.type.GenerateContentResponse
 import dev.shreyaspatil.ai.client.generativeai.type.GenerationConfig
 import dev.shreyaspatil.ai.client.generativeai.type.GoogleGenerativeAIException
-import dev.shreyaspatil.ai.client.generativeai.type.InvalidStateException
-import dev.shreyaspatil.ai.client.generativeai.type.NoParameterFunction
-import dev.shreyaspatil.ai.client.generativeai.type.OneParameterFunction
 import dev.shreyaspatil.ai.client.generativeai.type.PromptBlockedException
 import dev.shreyaspatil.ai.client.generativeai.type.RequestOptions
 import dev.shreyaspatil.ai.client.generativeai.type.ResponseStoppedException
 import dev.shreyaspatil.ai.client.generativeai.type.SafetySetting
 import dev.shreyaspatil.ai.client.generativeai.type.SerializationException
-import dev.shreyaspatil.ai.client.generativeai.type.ThreeParameterFunction
 import dev.shreyaspatil.ai.client.generativeai.type.Tool
 import dev.shreyaspatil.ai.client.generativeai.type.ToolConfig
-import dev.shreyaspatil.ai.client.generativeai.type.TwoParameterFunction
 import dev.shreyaspatil.ai.client.generativeai.type.content
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.JsonObject
+import kotlin.jvm.JvmOverloads
 
 /**
  * A facilitator for a given multimodal model (eg; Gemini).
@@ -72,6 +66,8 @@ internal constructor(
     val requestOptions: RequestOptions = RequestOptions(),
     private val controller: APIController,
 ) {
+
+    @JvmOverloads
     constructor(
         modelName: String,
         apiKey: String,
@@ -82,7 +78,7 @@ internal constructor(
         toolConfig: ToolConfig? = null,
         systemInstruction: Content? = null,
     ) : this(
-        modelName,
+        fullModelName(modelName),
         apiKey,
         generationConfig,
         safetySettings,
@@ -163,8 +159,7 @@ internal constructor(
         generateContentStream(content { image(prompt) })
 
     /** Creates a chat instance which internally tracks the ongoing conversation with the model */
-    fun startChat(history: List<Content> = emptyList()): dev.shreyaspatil.ai.client.generativeai.Chat =
-        dev.shreyaspatil.ai.client.generativeai.Chat(this, history.toMutableList())
+    fun startChat(history: List<Content> = emptyList()): Chat = Chat(this, history.toMutableList())
 
     /**
      * Counts the number of tokens used in a prompt.
@@ -196,36 +191,6 @@ internal constructor(
         return countTokens(content { image(prompt) })
     }
 
-    /**
-     * Executes a function requested by the model.
-     *
-     * @param functionCallPart A [FunctionCallPart] from the model, containing a function call and
-     *   parameters
-     * @return The output of the requested function call
-     */
-    suspend fun executeFunction(functionCallPart: FunctionCallPart): JsonObject {
-        if (tools == null) {
-            throw InvalidStateException("No registered tools")
-        }
-        val callable =
-            tools.flatMap { it.functionDeclarations }.firstOrNull { it.name == functionCallPart.name }
-                ?: throw InvalidStateException("No registered function named ${functionCallPart.name}")
-        return when (callable) {
-            is NoParameterFunction -> callable.execute()
-            is OneParameterFunction<*> ->
-                (callable as OneParameterFunction<Any?>).execute(functionCallPart)
-            is TwoParameterFunction<*, *> ->
-                (callable as TwoParameterFunction<Any?, Any?>).execute(functionCallPart)
-            is ThreeParameterFunction<*, *, *> ->
-                (callable as ThreeParameterFunction<Any?, Any?, Any?>).execute(functionCallPart)
-            is FourParameterFunction<*, *, *, *> ->
-                (callable as FourParameterFunction<Any?, Any?, Any?, Any?>).execute(functionCallPart)
-            else -> {
-                throw RuntimeException("UNREACHABLE")
-            }
-        }
-    }
-
     private fun constructRequest(vararg prompt: Content) =
         GenerateContentRequest(
             modelName,
@@ -238,7 +203,7 @@ internal constructor(
         )
 
     private fun constructCountTokensRequest(vararg prompt: Content) =
-        CountTokensRequest(modelName, prompt.map { it.toInternal() })
+        CountTokensRequest.forGenAI(constructRequest(*prompt))
 
     private fun GenerateContentResponse.validate() = apply {
         if (candidates.isEmpty() && promptFeedback == null) {

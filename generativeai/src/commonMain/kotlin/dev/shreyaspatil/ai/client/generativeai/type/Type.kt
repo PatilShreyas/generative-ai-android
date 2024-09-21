@@ -19,6 +19,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
+import kotlin.jvm.JvmField
 
 /**
  * Represents and passes the type information for an automated function call.
@@ -29,14 +30,21 @@ import kotlinx.serialization.json.jsonArray
  */
 class FunctionType<T>(val name: String, val parse: (String?) -> T?) {
     companion object {
-        val STRING = FunctionType<String>("STRING") { it }
-        val INTEGER = FunctionType<Long>("INTEGER") { it?.toLongOrNull() }
-        val NUMBER = FunctionType<Double>("NUMBER") { it?.toDoubleOrNull() }
-        val BOOLEAN = FunctionType<Boolean>("BOOLEAN") { it?.toBoolean() }
+        @JvmField val STRING = FunctionType<String>("STRING") { it }
+
+        @JvmField val INTEGER = FunctionType<Int>("INTEGER") { it?.toIntOrNull() }
+
+        @JvmField val LONG = FunctionType<Long>("INTEGER") { it?.toLongOrNull() }
+
+        @JvmField val NUMBER = FunctionType<Double>("NUMBER") { it?.toDoubleOrNull() }
+
+        @JvmField val BOOLEAN = FunctionType<Boolean>("BOOLEAN") { it?.toBoolean() }
+
+        @JvmField
         val ARRAY =
             FunctionType<List<String>>("ARRAY") { it ->
                 it?.let { Json.parseToJsonElement(it).jsonArray.map { element -> element.toString() } }
             }
-        val OBJECT = FunctionType<JsonObject>("OBJECT") { it?.let { Json.decodeFromString(JsonObject.serializer(), it) } }
+        val OBJECT = FunctionType("OBJECT") { it?.let { Json.decodeFromString(JsonObject.serializer(), it) } }
     }
 }

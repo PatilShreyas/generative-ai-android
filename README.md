@@ -75,6 +75,8 @@ Try these apps built with this SDK by the community:
 You can use the APIs mentioned in the [API Reference](https://ai.google.dev/tutorials/android_quickstart)
 by the official library.
 
+See the [Gemini API Cookbook](https://github.com/google-gemini/gemini-api-cookbook/) or [ai.google.dev](https://ai.google.dev) for complete documentation.
+
 From the official library, there are two major changes:
 - Package `com.google` is mapped to `dev.shreyaspatil`.
 - `Image(Bitmap)` was there for Android, instead `PlatformImage(ByteArray)` is used for KMP.

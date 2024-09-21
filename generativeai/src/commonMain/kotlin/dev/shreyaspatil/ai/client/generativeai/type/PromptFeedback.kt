@@ -21,10 +21,7 @@ package dev.shreyaspatil.ai.client.generativeai.type
  * @param blockReason The reason that content was blocked, if at all.
  * @param safetyRatings A list of relevant [SafetyRating]s.
  */
-class PromptFeedback(
-    val blockReason: BlockReason?,
-    val safetyRatings: List<SafetyRating>,
-)
+class PromptFeedback(val blockReason: BlockReason?, val safetyRatings: List<SafetyRating>)
 
 /** Describes why content was blocked. */
 enum class BlockReason {

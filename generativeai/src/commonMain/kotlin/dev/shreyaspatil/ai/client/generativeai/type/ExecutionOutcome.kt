@@ -15,21 +15,9 @@
  */
 package dev.shreyaspatil.ai.client.generativeai.type
 
-import kotlinx.serialization.json.JsonObject
-
-/**
- * Contains a set of function declarations that the model has access to. These can be used to gather
- * information, or complete tasks
- *
- * @param functionDeclarations The set of functions that this tool allows the model access to
- * @param codeExecution This is a flag value to enable Code Execution. Use [CODE_EXECUTION].
- */
-class Tool
-constructor(
-    val functionDeclarations: List<FunctionDeclaration>? = null,
-    val codeExecution: JsonObject? = null,
-) {
-    companion object {
-        val CODE_EXECUTION = Tool(codeExecution = JsonObject(emptyMap()))
-    }
+enum class ExecutionOutcome {
+    UNSPECIFIED,
+    OK,
+    FAILED,
+    DEADLINE_EXCEEDED,
 }

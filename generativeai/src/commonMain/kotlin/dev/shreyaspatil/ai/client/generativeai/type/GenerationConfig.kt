@@ -26,6 +26,9 @@ import kotlin.jvm.JvmField
  * @property candidateCount The max *unique* responses to return
  * @property maxOutputTokens The max tokens to generate per response
  * @property stopSequences A list of strings to stop generation on occurrence of
+ * @property responseMimeType Response type for generated candidate text. See the
+ *   [cloud docs](https://cloud.google.com/vertex-ai/docs/reference/rest/v1beta1/GenerationConfig)
+ *   for a list of supported types.
  */
 class GenerationConfig
 private constructor(
@@ -35,6 +38,8 @@ private constructor(
     val candidateCount: Int?,
     val maxOutputTokens: Int?,
     val stopSequences: List<String>?,
+    val responseMimeType: String?,
+    val responseSchema: Schema<*>?,
 ) {
 
     class Builder {
@@ -50,6 +55,10 @@ private constructor(
 
         @JvmField var stopSequences: List<String>? = null
 
+        @JvmField var responseMimeType: String? = null
+
+        @JvmField var responseSchema: Schema<*>? = null
+
         fun build() =
             GenerationConfig(
                 temperature = temperature,
@@ -58,6 +67,8 @@ private constructor(
                 candidateCount = candidateCount,
                 maxOutputTokens = maxOutputTokens,
                 stopSequences = stopSequences,
+                responseMimeType = responseMimeType,
+                responseSchema = responseSchema,
             )
     }
 
@@ -78,6 +89,7 @@ private constructor(
  *   candidateCount = 4
  *   maxOutputTokens = 300
  *   stopSequences = listOf("in conclusion", "-----", "do you need")
+ *   responseMimeType = "application/json"
  * }
  * ```
  */
