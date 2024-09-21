@@ -19,6 +19,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
+import kotlin.jvm.JvmField
 
 /**
  * Represents and passes the type information for an automated function call.
@@ -39,6 +40,6 @@ class FunctionType<T>(val name: String, val parse: (String?) -> T?) {
       FunctionType<List<String>>("ARRAY") { it ->
         it?.let { Json.parseToJsonElement(it).jsonArray.map { element -> element.toString() } }
       }
-    val OBJECT = FunctionType<JSONObject>("OBJECT") { it?.let { Json.decodeFromString(JsonObject.serializer(), it) } }
+    val OBJECT = FunctionType("OBJECT") { it?.let { Json.decodeFromString(JsonObject.serializer(), it) } }
   }
 }

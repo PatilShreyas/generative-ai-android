@@ -15,6 +15,7 @@
  */
 package dev.shreyaspatil.ai.client.generativeai.type
 
+import kotlin.jvm.JvmOverloads
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration

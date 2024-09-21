@@ -29,7 +29,10 @@ import dev.shreyaspatil.ai.client.generativeai.common.server.PromptFeedback
 import dev.shreyaspatil.ai.client.generativeai.common.server.SafetyRating
 import dev.shreyaspatil.ai.client.generativeai.common.shared.Blob
 import dev.shreyaspatil.ai.client.generativeai.common.shared.BlobPart
+import dev.shreyaspatil.ai.client.generativeai.common.shared.CodeExecutionResult
 import dev.shreyaspatil.ai.client.generativeai.common.shared.Content
+import dev.shreyaspatil.ai.client.generativeai.common.shared.ExecutableCode
+import dev.shreyaspatil.ai.client.generativeai.common.shared.ExecutableCodePart
 import dev.shreyaspatil.ai.client.generativeai.common.shared.FileData
 import dev.shreyaspatil.ai.client.generativeai.common.shared.FileDataPart
 import dev.shreyaspatil.ai.client.generativeai.common.shared.FunctionCall
@@ -38,12 +41,15 @@ import dev.shreyaspatil.ai.client.generativeai.common.shared.FunctionResponse
 import dev.shreyaspatil.ai.client.generativeai.common.shared.FunctionResponsePart
 import dev.shreyaspatil.ai.client.generativeai.common.shared.HarmBlockThreshold
 import dev.shreyaspatil.ai.client.generativeai.common.shared.HarmCategory
+import dev.shreyaspatil.ai.client.generativeai.common.shared.Outcome
 import dev.shreyaspatil.ai.client.generativeai.common.shared.Part
 import dev.shreyaspatil.ai.client.generativeai.common.shared.SafetySetting
 import dev.shreyaspatil.ai.client.generativeai.common.shared.TextPart
 import dev.shreyaspatil.ai.client.generativeai.type.Bitmap
 import dev.shreyaspatil.ai.client.generativeai.type.BlockThreshold
 import dev.shreyaspatil.ai.client.generativeai.type.CitationMetadata
+import dev.shreyaspatil.ai.client.generativeai.type.CodeExecutionResultPart
+import dev.shreyaspatil.ai.client.generativeai.type.ExecutionOutcome
 import dev.shreyaspatil.ai.client.generativeai.type.FunctionCallingConfig
 import dev.shreyaspatil.ai.client.generativeai.type.FunctionDeclaration
 import dev.shreyaspatil.ai.client.generativeai.type.ImagePart
@@ -52,6 +58,8 @@ import dev.shreyaspatil.ai.client.generativeai.type.Tool
 import dev.shreyaspatil.ai.client.generativeai.type.ToolConfig
 import dev.shreyaspatil.ai.client.generativeai.type.UsageMetadata
 import dev.shreyaspatil.ai.client.generativeai.type.content
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -77,7 +85,12 @@ internal fun dev.shreyaspatil.ai.client.generativeai.type.Part.toInternal(): Par
 
         is dev.shreyaspatil.ai.client.generativeai.type.FileDataPart ->
             FileDataPart(FileData(fileUri = uri, mimeType = mimeType))
-
+        is dev.shreyaspatil.ai.client.generativeai.type.ExecutableCodePart ->
+            ExecutableCodePart(ExecutableCode(language, code))
+        is CodeExecutionResultPart ->
+            dev.shreyaspatil.ai.client.generativeai.common.shared.CodeExecutionResultPart(
+                CodeExecutionResult(outcome.toInternal(), output)
+            )
         else ->
             throw SerializationException(
                 "The given subclass of Part ($this) is not supported in the serialization yet.",
@@ -120,8 +133,19 @@ internal fun BlockThreshold.toInternal() =
         BlockThreshold.UNSPECIFIED -> HarmBlockThreshold.UNSPECIFIED
     }
 
+internal fun ExecutionOutcome.toInternal() =
+    when (this) {
+        ExecutionOutcome.UNSPECIFIED -> Outcome.UNSPECIFIED
+        ExecutionOutcome.OK -> Outcome.OUTCOME_OK
+        ExecutionOutcome.FAILED -> Outcome.OUTCOME_FAILED
+        ExecutionOutcome.DEADLINE_EXCEEDED -> Outcome.OUTCOME_DEADLINE_EXCEEDED
+    }
+
 internal fun Tool.toInternal() =
-    dev.shreyaspatil.ai.client.generativeai.common.client.Tool(functionDeclarations.map { it.toInternal() })
+    dev.shreyaspatil.ai.client.generativeai.common.client.Tool(
+        functionDeclarations?.map { it.toInternal() },
+        codeExecution = codeExecution,
+    )
 
 internal fun ToolConfig.toInternal() =
     dev.shreyaspatil.ai.client.generativeai.common.client.ToolConfig(
@@ -147,9 +171,10 @@ internal fun FunctionDeclaration.toInternal() =
         name,
         description,
         Schema(
-            properties = getParameters().associate { it.name to it.toInternal() },
-            required = getParameters().map { it.name },
+            properties = parameters.associate { it.name to it.toInternal() },
+            required = requiredParameters,
             type = "OBJECT",
+            nullable = false,
         ),
     )
 
@@ -158,6 +183,7 @@ internal fun <T> dev.shreyaspatil.ai.client.generativeai.type.Schema<T>.toIntern
         type.name,
         description,
         format,
+        nullable,
         enum,
         properties?.mapValues { it.value.toInternal() },
         required,
@@ -210,7 +236,11 @@ internal fun Part.toPublic(): dev.shreyaspatil.ai.client.generativeai.type.Part 
                 fileData.fileUri,
                 fileData.mimeType,
             )
-
+        is dev.shreyaspatil.ai.client.generativeai.common.shared.CodeExecutionResultPart ->
+            CodeExecutionResultPart(
+                codeExecutionResult.outcome.toPublic(),
+                codeExecutionResult.output,
+            )
         else ->
             throw SerializationException(
                 "Unsupported part type \"${this}\" provided. This model may not be supported by this SDK.",
@@ -219,7 +249,7 @@ internal fun Part.toPublic(): dev.shreyaspatil.ai.client.generativeai.type.Part 
 }
 
 internal fun CitationSources.toPublic() =
-    CitationMetadata(startIndex = startIndex, endIndex = endIndex, uri = uri, license = license)
+    CitationMetadata(startIndex = startIndex, endIndex = endIndex, uri = uri ?: "", license = license)
 
 internal fun SafetyRating.toPublic() =
     dev.shreyaspatil.ai.client.generativeai.type.SafetyRating(
@@ -256,7 +286,6 @@ internal fun HarmCategory.toPublic() =
 
         HarmCategory.DANGEROUS_CONTENT ->
             dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.DANGEROUS_CONTENT
-
         HarmCategory.UNKNOWN -> dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.UNKNOWN
     }
 
@@ -279,6 +308,15 @@ internal fun BlockReason.toPublic() =
         BlockReason.OTHER -> dev.shreyaspatil.ai.client.generativeai.type.BlockReason.OTHER
         BlockReason.UNKNOWN -> dev.shreyaspatil.ai.client.generativeai.type.BlockReason.UNKNOWN
     }
+
+internal fun Outcome.toPublic() =
+    when (this) {
+        Outcome.UNSPECIFIED -> ExecutionOutcome.UNSPECIFIED
+        Outcome.OUTCOME_OK -> ExecutionOutcome.OK
+        Outcome.OUTCOME_FAILED -> ExecutionOutcome.FAILED
+        Outcome.OUTCOME_DEADLINE_EXCEEDED -> ExecutionOutcome.DEADLINE_EXCEEDED
+    }
+
 
 internal fun GenerateContentResponse.toPublic() =
     dev.shreyaspatil.ai.client.generativeai.type.GenerateContentResponse(

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.ai.client.generativeai.type
+package dev.shreyaspatil.ai.client.generativeai.type
 
 enum class ExecutionOutcome {
   UNSPECIFIED,

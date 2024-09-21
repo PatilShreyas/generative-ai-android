@@ -19,7 +19,7 @@ package com.google.ai.client.generativeai
 import com.google.ai.client.generativeai.type.Candidate
 import com.google.ai.client.generativeai.type.CodeExecutionResultPart
 import com.google.ai.client.generativeai.type.ExecutableCodePart
-import com.google.ai.client.generativeai.type.ExecutionOutcome
+import dev.shreyaspatil.ai.client.generativeai.type.ExecutionOutcome
 import com.google.ai.client.generativeai.type.FunctionCallPart
 import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.google.ai.client.generativeai.type.content
