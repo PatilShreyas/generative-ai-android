@@ -260,10 +260,9 @@ private suspend fun validateResponse(response: HttpResponse) {
     if (message.contains("quota")) {
         throw QuotaExceededException(message)
     }
-    // TODO (forked): Fix this
-//    if (error.details?.any { "SERVICE_DISABLED" == it.reason } == true) {
-//        throw ServiceDisabledException(message)
-//    }
+    if (error.details.any { "SERVICE_DISABLED" == it.reason }) {
+        throw ServiceDisabledException(message)
+    }
     throw ServerException(message)
 }
 
