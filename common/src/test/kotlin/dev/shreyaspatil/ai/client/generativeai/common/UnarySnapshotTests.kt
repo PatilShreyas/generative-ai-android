@@ -15,20 +15,20 @@
  */
 package dev.shreyaspatil.ai.client.generativeai.common
 
-import com.google.ai.client.generativeai.common.server.BlockReason
-import com.google.ai.client.generativeai.common.server.FinishReason
-import com.google.ai.client.generativeai.common.server.HarmProbability
-import com.google.ai.client.generativeai.common.server.HarmSeverity
-import com.google.ai.client.generativeai.common.shared.CodeExecutionResult
-import com.google.ai.client.generativeai.common.shared.CodeExecutionResultPart
-import com.google.ai.client.generativeai.common.shared.ExecutableCode
-import com.google.ai.client.generativeai.common.shared.ExecutableCodePart
-import com.google.ai.client.generativeai.common.shared.FunctionCallPart
-import com.google.ai.client.generativeai.common.shared.HarmCategory
-import com.google.ai.client.generativeai.common.shared.Outcome
-import com.google.ai.client.generativeai.common.shared.TextPart
-import com.google.ai.client.generativeai.common.util.goldenUnaryFile
-import com.google.ai.client.generativeai.common.util.shouldNotBeNullOrEmpty
+import dev.shreyaspatil.ai.client.generativeai.common.server.BlockReason
+import dev.shreyaspatil.ai.client.generativeai.common.server.FinishReason
+import dev.shreyaspatil.ai.client.generativeai.common.server.HarmProbability
+import dev.shreyaspatil.ai.client.generativeai.common.server.HarmSeverity
+import dev.shreyaspatil.ai.client.generativeai.common.shared.CodeExecutionResult
+import dev.shreyaspatil.ai.client.generativeai.common.shared.CodeExecutionResultPart
+import dev.shreyaspatil.ai.client.generativeai.common.shared.ExecutableCode
+import dev.shreyaspatil.ai.client.generativeai.common.shared.ExecutableCodePart
+import dev.shreyaspatil.ai.client.generativeai.common.shared.FunctionCallPart
+import dev.shreyaspatil.ai.client.generativeai.common.shared.HarmCategory
+import dev.shreyaspatil.ai.client.generativeai.common.shared.Outcome
+import dev.shreyaspatil.ai.client.generativeai.common.shared.TextPart
+import dev.shreyaspatil.ai.client.generativeai.common.util.goldenUnaryFile
+import dev.shreyaspatil.ai.client.generativeai.common.util.shouldNotBeNullOrEmpty
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull

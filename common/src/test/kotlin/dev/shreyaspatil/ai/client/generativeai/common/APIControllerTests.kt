@@ -15,15 +15,15 @@
  */
 package dev.shreyaspatil.ai.client.generativeai.common
 
-import com.google.ai.client.generativeai.common.client.FunctionCallingConfig
-import com.google.ai.client.generativeai.common.client.Tool
-import com.google.ai.client.generativeai.common.client.ToolConfig
-import com.google.ai.client.generativeai.common.shared.Content
-import com.google.ai.client.generativeai.common.shared.TextPart
-import com.google.ai.client.generativeai.common.util.commonTest
-import com.google.ai.client.generativeai.common.util.createResponses
-import com.google.ai.client.generativeai.common.util.doBlocking
-import com.google.ai.client.generativeai.common.util.prepareStreamingResponse
+import dev.shreyaspatil.ai.client.generativeai.common.client.FunctionCallingConfig
+import dev.shreyaspatil.ai.client.generativeai.common.client.Tool
+import dev.shreyaspatil.ai.client.generativeai.common.client.ToolConfig
+import dev.shreyaspatil.ai.client.generativeai.common.shared.Content
+import dev.shreyaspatil.ai.client.generativeai.common.shared.TextPart
+import dev.shreyaspatil.ai.client.generativeai.common.util.commonTest
+import dev.shreyaspatil.ai.client.generativeai.common.util.createResponses
+import dev.shreyaspatil.ai.client.generativeai.common.util.doBlocking
+import dev.shreyaspatil.ai.client.generativeai.common.util.prepareStreamingResponse
 import io.kotest.assertions.json.shouldContainJsonKey
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
@@ -94,7 +94,7 @@ internal class RequestFormatTests {
                 "gemini-pro-1.5",
                 RequestOptions(),
                 mockEngine,
-                "genai-android/${BuildConfig.VERSION_NAME}",
+                "genai-android",
                 null,
             )
 

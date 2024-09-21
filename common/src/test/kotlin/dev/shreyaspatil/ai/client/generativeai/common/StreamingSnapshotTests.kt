@@ -15,11 +15,11 @@
  */
 package dev.shreyaspatil.ai.client.generativeai.common
 
-import com.google.ai.client.generativeai.common.server.BlockReason
-import com.google.ai.client.generativeai.common.server.FinishReason
-import com.google.ai.client.generativeai.common.shared.HarmCategory
-import com.google.ai.client.generativeai.common.shared.TextPart
-import com.google.ai.client.generativeai.common.util.goldenStreamingFile
+import dev.shreyaspatil.ai.client.generativeai.common.server.BlockReason
+import dev.shreyaspatil.ai.client.generativeai.common.server.FinishReason
+import dev.shreyaspatil.ai.client.generativeai.common.shared.HarmCategory
+import dev.shreyaspatil.ai.client.generativeai.common.shared.TextPart
+import dev.shreyaspatil.ai.client.generativeai.common.util.goldenStreamingFile
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
