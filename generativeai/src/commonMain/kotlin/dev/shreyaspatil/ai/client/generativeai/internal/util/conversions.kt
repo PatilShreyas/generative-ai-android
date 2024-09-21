@@ -58,8 +58,6 @@ import dev.shreyaspatil.ai.client.generativeai.type.Tool
 import dev.shreyaspatil.ai.client.generativeai.type.ToolConfig
 import dev.shreyaspatil.ai.client.generativeai.type.UsageMetadata
 import dev.shreyaspatil.ai.client.generativeai.type.content
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -89,7 +87,7 @@ internal fun dev.shreyaspatil.ai.client.generativeai.type.Part.toInternal(): Par
             ExecutableCodePart(ExecutableCode(language, code))
         is CodeExecutionResultPart ->
             dev.shreyaspatil.ai.client.generativeai.common.shared.CodeExecutionResultPart(
-                CodeExecutionResult(outcome.toInternal(), output)
+                CodeExecutionResult(outcome.toInternal(), output),
             )
         else ->
             throw SerializationException(
@@ -316,7 +314,6 @@ internal fun Outcome.toPublic() =
         Outcome.OUTCOME_FAILED -> ExecutionOutcome.FAILED
         Outcome.OUTCOME_DEADLINE_EXCEEDED -> ExecutionOutcome.DEADLINE_EXCEEDED
     }
-
 
 internal fun GenerateContentResponse.toPublic() =
     dev.shreyaspatil.ai.client.generativeai.type.GenerateContentResponse(

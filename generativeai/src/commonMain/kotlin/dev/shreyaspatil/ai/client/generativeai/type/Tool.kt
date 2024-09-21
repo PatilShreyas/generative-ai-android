@@ -15,7 +15,6 @@
  */
 package dev.shreyaspatil.ai.client.generativeai.type
 
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -27,10 +26,10 @@ import kotlinx.serialization.json.JsonObject
  */
 class Tool
 constructor(
-  val functionDeclarations: List<FunctionDeclaration>? = null,
-  val codeExecution: JsonObject? = null,
+    val functionDeclarations: List<FunctionDeclaration>? = null,
+    val codeExecution: JsonObject? = null,
 ) {
-  companion object {
-    val CODE_EXECUTION = Tool(codeExecution = JsonObject(emptyMap()))
-  }
+    companion object {
+        val CODE_EXECUTION = Tool(codeExecution = JsonObject(emptyMap()))
+    }
 }

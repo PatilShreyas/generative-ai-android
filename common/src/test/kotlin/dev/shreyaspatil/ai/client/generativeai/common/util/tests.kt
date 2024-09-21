@@ -27,7 +27,11 @@ import dev.shreyaspatil.ai.client.generativeai.common.shared.Content
 import dev.shreyaspatil.ai.client.generativeai.common.shared.TextPart
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.close
 import io.ktor.utils.io.writeFully
@@ -189,7 +193,7 @@ internal fun loadResourceFile(path: String) = File("src/test/resources/$path")
  * Syntax sugar for [shouldNotBeNull] and [shouldNotBeEmpty].
  */
 inline fun <reified T : Any> Collection<T>?.shouldNotBeNullOrEmpty(): Collection<T> {
-  shouldNotBeNull()
-  shouldNotBeEmpty()
-  return this
+    shouldNotBeNull()
+    shouldNotBeEmpty()
+    return this
 }

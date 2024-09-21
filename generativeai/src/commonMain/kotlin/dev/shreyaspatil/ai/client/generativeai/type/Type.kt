@@ -29,17 +29,22 @@ import kotlin.jvm.JvmField
  * @property T: the type of the object that this maps to in code.
  */
 class FunctionType<T>(val name: String, val parse: (String?) -> T?) {
-  companion object {
-    @JvmField val STRING = FunctionType<String>("STRING") { it }
-    @JvmField val INTEGER = FunctionType<Int>("INTEGER") { it?.toIntOrNull() }
-    @JvmField val LONG = FunctionType<Long>("INTEGER") { it?.toLongOrNull() }
-    @JvmField val NUMBER = FunctionType<Double>("NUMBER") { it?.toDoubleOrNull() }
-    @JvmField val BOOLEAN = FunctionType<Boolean>("BOOLEAN") { it?.toBoolean() }
-    @JvmField
-    val ARRAY =
-      FunctionType<List<String>>("ARRAY") { it ->
-        it?.let { Json.parseToJsonElement(it).jsonArray.map { element -> element.toString() } }
-      }
-    val OBJECT = FunctionType("OBJECT") { it?.let { Json.decodeFromString(JsonObject.serializer(), it) } }
-  }
+    companion object {
+        @JvmField val STRING = FunctionType<String>("STRING") { it }
+
+        @JvmField val INTEGER = FunctionType<Int>("INTEGER") { it?.toIntOrNull() }
+
+        @JvmField val LONG = FunctionType<Long>("INTEGER") { it?.toLongOrNull() }
+
+        @JvmField val NUMBER = FunctionType<Double>("NUMBER") { it?.toDoubleOrNull() }
+
+        @JvmField val BOOLEAN = FunctionType<Boolean>("BOOLEAN") { it?.toBoolean() }
+
+        @JvmField
+        val ARRAY =
+            FunctionType<List<String>>("ARRAY") { it ->
+                it?.let { Json.parseToJsonElement(it).jsonArray.map { element -> element.toString() } }
+            }
+        val OBJECT = FunctionType("OBJECT") { it?.let { Json.decodeFromString(JsonObject.serializer(), it) } }
+    }
 }

@@ -32,38 +32,45 @@ import kotlin.jvm.JvmField
  */
 class GenerationConfig
 private constructor(
-  val temperature: Float?,
-  val topK: Int?,
-  val topP: Float?,
-  val candidateCount: Int?,
-  val maxOutputTokens: Int?,
-  val stopSequences: List<String>?,
-  val responseMimeType: String?,
-  val responseSchema: Schema<*>?,
+    val temperature: Float?,
+    val topK: Int?,
+    val topP: Float?,
+    val candidateCount: Int?,
+    val maxOutputTokens: Int?,
+    val stopSequences: List<String>?,
+    val responseMimeType: String?,
+    val responseSchema: Schema<*>?,
 ) {
 
-  class Builder {
-    @JvmField var temperature: Float? = null
-    @JvmField var topK: Int? = null
-    @JvmField var topP: Float? = null
-    @JvmField var candidateCount: Int? = null
-    @JvmField var maxOutputTokens: Int? = null
-    @JvmField var stopSequences: List<String>? = null
-    @JvmField var responseMimeType: String? = null
-    @JvmField var responseSchema: Schema<*>? = null
+    class Builder {
+        @JvmField var temperature: Float? = null
 
-    fun build() =
-      GenerationConfig(
-        temperature = temperature,
-        topK = topK,
-        topP = topP,
-        candidateCount = candidateCount,
-        maxOutputTokens = maxOutputTokens,
-        stopSequences = stopSequences,
-        responseMimeType = responseMimeType,
-        responseSchema = responseSchema,
-      )
-  }
+        @JvmField var topK: Int? = null
+
+        @JvmField var topP: Float? = null
+
+        @JvmField var candidateCount: Int? = null
+
+        @JvmField var maxOutputTokens: Int? = null
+
+        @JvmField var stopSequences: List<String>? = null
+
+        @JvmField var responseMimeType: String? = null
+
+        @JvmField var responseSchema: Schema<*>? = null
+
+        fun build() =
+            GenerationConfig(
+                temperature = temperature,
+                topK = topK,
+                topP = topP,
+                candidateCount = candidateCount,
+                maxOutputTokens = maxOutputTokens,
+                stopSequences = stopSequences,
+                responseMimeType = responseMimeType,
+                responseSchema = responseSchema,
+            )
+    }
 
     companion object {
         fun builder() = Builder()

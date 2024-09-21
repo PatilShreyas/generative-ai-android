@@ -47,7 +47,8 @@ typealias Base64 = String
 @Serializable
 data class Content(@EncodeDefault val role: String? = "user", val parts: List<Part>)
 
-@Serializable(PartSerializer::class) sealed interface Part
+@Serializable(PartSerializer::class)
+sealed interface Part
 
 @Serializable data class TextPart(val text: String) : Part
 
@@ -81,7 +82,7 @@ data class FileData(
 @Serializable data class CodeExecutionResult(val outcome: Outcome, val output: String)
 
 @Serializable
-enum class Outcome(override val serialName: String): SerializableEnum<Outcome> {
+enum class Outcome(override val serialName: String) : SerializableEnum<Outcome> {
     UNSPECIFIED("OUTCOME_UNSPECIFIED"),
     OUTCOME_OK("OUTCOME_OK"),
     OUTCOME_FAILED("OUTCOME_FAILED"),
@@ -89,10 +90,10 @@ enum class Outcome(override val serialName: String): SerializableEnum<Outcome> {
 }
 
 @Serializable
-data class SafetySetting(val category: HarmCategory, val threshold: HarmBlockThreshold,  val method: HarmBlockMethod? = null,)
+data class SafetySetting(val category: HarmCategory, val threshold: HarmBlockThreshold, val method: HarmBlockMethod? = null)
 
 @Serializable
-enum class HarmBlockThreshold(override val serialName: String): SerializableEnum<HarmBlockThreshold> {
+enum class HarmBlockThreshold(override val serialName: String) : SerializableEnum<HarmBlockThreshold> {
     UNSPECIFIED("HARM_BLOCK_THRESHOLD_UNSPECIFIED"),
     BLOCK_LOW_AND_ABOVE("BLOCK_LOW_AND_ABOVE"),
     BLOCK_MEDIUM_AND_ABOVE("BLOCK_MEDIUM_AND_ABOVE"),
@@ -101,7 +102,7 @@ enum class HarmBlockThreshold(override val serialName: String): SerializableEnum
 }
 
 @Serializable
-enum class HarmBlockMethod(override val serialName: String): SerializableEnum<HarmCategory> {
+enum class HarmBlockMethod(override val serialName: String) : SerializableEnum<HarmCategory> {
     UNSPECIFIED("HARM_BLOCK_METHOD_UNSPECIFIED"),
     SEVERITY("SEVERITY"),
     PROBABILITY("PROBABILITY"),

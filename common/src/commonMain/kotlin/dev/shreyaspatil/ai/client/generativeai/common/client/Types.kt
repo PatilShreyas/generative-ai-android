@@ -45,7 +45,7 @@ data class Tool(
 
 @Serializable
 data class ToolConfig(
-    @SerialName("function_calling_config") val functionCallingConfig: FunctionCallingConfig
+    @SerialName("function_calling_config") val functionCallingConfig: FunctionCallingConfig,
 )
 
 @Serializable

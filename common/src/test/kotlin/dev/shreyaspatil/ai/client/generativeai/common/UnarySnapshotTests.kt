@@ -15,20 +15,34 @@
  */
 package dev.shreyaspatil.ai.client.generativeai.common
 
-import dev.shreyaspatil.ai.client.generativeai.common.server.BlockReason
-import dev.shreyaspatil.ai.client.generativeai.common.server.FinishReason
-import dev.shreyaspatil.ai.client.generativeai.common.server.HarmProbability
-import dev.shreyaspatil.ai.client.generativeai.common.server.HarmSeverity
-import dev.shreyaspatil.ai.client.generativeai.common.shared.HarmCategory
-import dev.shreyaspatil.ai.client.generativeai.common.util.goldenUnaryFile
+import com.google.ai.client.generativeai.common.server.BlockReason
+import com.google.ai.client.generativeai.common.server.FinishReason
+import com.google.ai.client.generativeai.common.server.HarmProbability
+import com.google.ai.client.generativeai.common.server.HarmSeverity
+import com.google.ai.client.generativeai.common.shared.CodeExecutionResult
+import com.google.ai.client.generativeai.common.shared.CodeExecutionResultPart
+import com.google.ai.client.generativeai.common.shared.ExecutableCode
+import com.google.ai.client.generativeai.common.shared.ExecutableCodePart
+import com.google.ai.client.generativeai.common.shared.FunctionCallPart
+import com.google.ai.client.generativeai.common.shared.HarmCategory
+import com.google.ai.client.generativeai.common.shared.Outcome
+import com.google.ai.client.generativeai.common.shared.TextPart
+import com.google.ai.client.generativeai.common.util.goldenUnaryFile
+import com.google.ai.client.generativeai.common.util.shouldNotBeNullOrEmpty
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.Serializable
 import org.junit.Test
 import kotlin.time.Duration.Companion.seconds
+
+@Serializable internal data class MountainColors(val name: String, val colors: List<String>)
 
 internal class UnarySnapshotTests {
     private val testTimeout = 5.seconds
@@ -65,9 +79,9 @@ internal class UnarySnapshotTests {
             withTimeout(testTimeout) {
                 val response = apiController.generateContent(textGenerateContentRequest("prompt"))
 
-                response.candidates?.first {
-                    it.safetyRatings?.any { it.category == HarmCategory.UNKNOWN } ?: false
-                }
+                response.candidates?.isNullOrEmpty() shouldBe false
+                val candidate = response.candidates?.first()
+                candidate?.safetyRatings?.any { it.category == HarmCategory.UNKNOWN } shouldBe true
             }
         }
 
@@ -209,6 +223,22 @@ internal class UnarySnapshotTests {
         }
 
     @Test
+    fun `properly translates json text`() =
+        goldenUnaryFile("success-constraint-decoding-json.json") {
+            withTimeout(testTimeout) {
+                val response = apiController.generateContent(textGenerateContentRequest("prompt"))
+
+                response.candidates?.isEmpty() shouldBe false
+                with(
+                    response.candidates?.first()?.content?.parts?.first()?.shouldBeInstanceOf<TextPart>(),
+                ) {
+                    shouldNotBeNull()
+                    JSON.decodeFromString<List<MountainColors>>(text).shouldNotBeEmpty()
+                }
+            }
+        }
+
+    @Test
     fun `invalid response`() =
         goldenUnaryFile("failure-invalid-response.json") {
             withTimeout(testTimeout) {
@@ -265,6 +295,79 @@ internal class UnarySnapshotTests {
                 shouldThrow<ServerException> {
                     apiController.generateContent(textGenerateContentRequest("prompt"))
                 }
+            }
+        }
+
+    @Test
+    fun `service disabled`() =
+        goldenUnaryFile("failure-service-disabled.json", HttpStatusCode.Forbidden) {
+            withTimeout(testTimeout) {
+                shouldThrow<ServiceDisabledException> {
+                    apiController.generateContent(textGenerateContentRequest("prompt"))
+                }
+            }
+        }
+
+    @Test
+    fun `function call contains null param`() =
+        goldenUnaryFile("success-function-call-null.json") {
+            withTimeout(testTimeout) {
+                val response = apiController.generateContent(textGenerateContentRequest("prompt"))
+                val callPart = (response.candidates!!.first().content!!.parts.first() as FunctionCallPart)
+
+                callPart.functionCall.args shouldNotBe null
+                callPart.functionCall.args?.get("season") shouldBe null
+            }
+        }
+
+    @Test
+    fun `function call contains json literal`() =
+        goldenUnaryFile("success-function-call-json-literal.json") {
+            withTimeout(testTimeout) {
+                val response = apiController.generateContent(textGenerateContentRequest("prompt"))
+                val content = response.candidates.shouldNotBeNullOrEmpty().first().content
+                val callPart =
+                    content.let {
+                        it.shouldNotBeNull()
+                        it.parts.shouldNotBeEmpty()
+                        it.parts.first().shouldBeInstanceOf<FunctionCallPart>()
+                    }
+
+                callPart.functionCall.args shouldNotBe null
+                callPart.functionCall.args?.get("current") shouldBe "true"
+            }
+        }
+
+    @Test
+    fun `function call has no arguments field`() =
+        goldenUnaryFile("success-function-call-empty-arguments.json") {
+            withTimeout(testTimeout) {
+                val response = apiController.generateContent(textGenerateContentRequest("prompt"))
+                val content = response.candidates.shouldNotBeNullOrEmpty().first().content
+                content.shouldNotBeNull()
+                val callPart = content.parts.shouldNotBeNullOrEmpty().first() as FunctionCallPart
+
+                callPart.functionCall.name shouldBe "current_time"
+                callPart.functionCall.args shouldBe null
+            }
+        }
+
+    @Test
+    fun `code execution parses correctly`() =
+        goldenUnaryFile("success-code-execution.json") {
+            withTimeout(testTimeout) {
+                val response = apiController.generateContent(textGenerateContentRequest("prompt"))
+                val content = response.candidates.shouldNotBeNullOrEmpty().first().content
+                content.shouldNotBeNull()
+                val executableCodePart = content.parts[0]
+                val codeExecutionResult = content.parts[1]
+
+                executableCodePart.shouldBe(
+                    ExecutableCodePart(ExecutableCode("PYTHON", "print(\"Hello World\")")),
+                )
+                codeExecutionResult.shouldBe(
+                    CodeExecutionResultPart(CodeExecutionResult(Outcome.OUTCOME_OK, "Hello World")),
+                )
             }
         }
 }

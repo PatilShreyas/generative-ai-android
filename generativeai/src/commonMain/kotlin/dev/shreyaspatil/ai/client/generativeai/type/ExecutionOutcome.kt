@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Google LLC
+ * Copyright 2024 Shreyas Patil
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.shreyaspatil.ai.client.generativeai.type
 
 enum class ExecutionOutcome {
-  UNSPECIFIED,
-  OK,
-  FAILED,
-  DEADLINE_EXCEEDED,
+    UNSPECIFIED,
+    OK,
+    FAILED,
+    DEADLINE_EXCEEDED,
 }

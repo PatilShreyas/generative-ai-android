@@ -72,7 +72,7 @@ class GenerateContentResponse(
         if (parts.isEmpty()) {
             if (otherParts.isNotEmpty()) {
                 warn(
-                    "We didn't find any $type, but we did find other part types. Did you ask for the right type?"
+                    "We didn't find any $type, but we did find other part types. Did you ask for the right type?",
                 )
             }
 

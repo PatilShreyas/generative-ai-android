@@ -33,10 +33,8 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteChannel
 import kotlinx.coroutines.CoroutineName
@@ -140,7 +138,7 @@ internal constructor(
     fun generateContentStream(request: GenerateContentRequest): Flow<GenerateContentResponse> =
         client
             .postStream<GenerateContentResponse>(
-                "${requestOptions.endpoint}/${requestOptions.apiVersion}/$model:streamGenerateContent?alt=sse"
+                "${requestOptions.endpoint}/${requestOptions.apiVersion}/$model:streamGenerateContent?alt=sse",
             ) {
                 applyCommonConfiguration(request)
             }
@@ -241,7 +239,6 @@ interface HeaderProvider {
 
     suspend fun generateHeaders(): Map<String, String>
 }
-
 
 private suspend fun validateResponse(response: HttpResponse) {
     if (response.status == HttpStatusCode.OK) return
