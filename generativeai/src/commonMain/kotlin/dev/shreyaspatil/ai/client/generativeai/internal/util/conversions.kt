@@ -107,6 +107,8 @@ internal fun dev.shreyaspatil.ai.client.generativeai.type.GenerationConfig.toInt
         candidateCount = candidateCount,
         maxOutputTokens = maxOutputTokens,
         stopSequences = stopSequences,
+        responseMimeType = responseMimeType,
+        responseSchema = responseSchema?.toInternal(),
     )
 
 internal fun dev.shreyaspatil.ai.client.generativeai.type.HarmCategory.toInternal() =
