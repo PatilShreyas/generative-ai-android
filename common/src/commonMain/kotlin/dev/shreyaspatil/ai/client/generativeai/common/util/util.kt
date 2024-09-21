@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.ai.client.generativeai.common.util
+package dev.shreyaspatil.ai.client.generativeai.common.util
 
 /**
  * Ensures the model name provided has a `models/` prefix

@@ -18,6 +18,7 @@ package dev.shreyaspatil.ai.client.generativeai.common
 import dev.shreyaspatil.ai.client.generativeai.common.server.FinishReason
 import dev.shreyaspatil.ai.client.generativeai.common.util.Log
 import dev.shreyaspatil.ai.client.generativeai.common.util.decodeToFlow
+import dev.shreyaspatil.ai.client.generativeai.common.util.fullModelName
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
@@ -32,9 +33,12 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.utils.io.ByteChannel
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
@@ -46,9 +50,10 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration
 
-val JSON = Json {
+internal val JSON = Json {
     ignoreUnknownKeys = true
     prettyPrint = false
+    isLenient = true
 }
 
 /**
@@ -80,6 +85,23 @@ internal constructor(
         apiClient: String,
         headerProvider: HeaderProvider? = null,
     ) : this(key, model, requestOptions, null, apiClient, headerProvider)
+
+    constructor(
+        key: String,
+        model: String,
+        requestOptions: RequestOptions,
+        apiClient: String,
+        headerProvider: HeaderProvider?,
+        channel: ByteChannel,
+        status: HttpStatusCode,
+    ) : this(
+        key,
+        model,
+        requestOptions,
+        null,
+        apiClient,
+        headerProvider,
+    )
 
     private val model = fullModelName(model)
 
@@ -118,7 +140,7 @@ internal constructor(
     fun generateContentStream(request: GenerateContentRequest): Flow<GenerateContentResponse> =
         client
             .postStream<GenerateContentResponse>(
-                "${requestOptions.endpoint}/${requestOptions.apiVersion}/$model:streamGenerateContent?alt=sse",
+                "${requestOptions.endpoint}/${requestOptions.apiVersion}/$model:streamGenerateContent?alt=sse"
             ) {
                 applyCommonConfiguration(request)
             }
@@ -220,22 +242,17 @@ interface HeaderProvider {
     suspend fun generateHeaders(): Map<String, String>
 }
 
-/**
- * Ensures the model name provided has a `models/` prefix
- *
- * Models must be prepended with the `models/` prefix when communicating with the backend.
- */
-private fun fullModelName(name: String): String = name.takeIf { it.contains("/") } ?: "models/$name"
 
 private suspend fun validateResponse(response: HttpResponse) {
     if (response.status == HttpStatusCode.OK) return
     val text = response.bodyAsText()
-    val message =
+    val error =
         try {
-            JSON.decodeFromString<GRpcErrorResponse>(text).error.message
+            JSON.decodeFromString<GRpcErrorResponse>(text).error
         } catch (e: Throwable) {
-            "Unexpected Response:\n$text"
+            throw ServerException("Unexpected Response:\n$text $e")
         }
+    val message = error.message
     if (message.contains("API key not valid")) {
         throw InvalidAPIKeyException(message)
     }
@@ -246,6 +263,10 @@ private suspend fun validateResponse(response: HttpResponse) {
     if (message.contains("quota")) {
         throw QuotaExceededException(message)
     }
+    // TODO (forked): Fix this
+//    if (error.details?.any { "SERVICE_DISABLED" == it.reason } == true) {
+//        throw ServiceDisabledException(message)
+//    }
     throw ServerException(message)
 }
 
