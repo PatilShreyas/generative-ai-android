@@ -41,9 +41,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import kotlin.test.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -295,42 +293,39 @@ internal class RequestFormatTests {
 
         requestBodyAsText shouldContainJsonKey "tools[0].codeExecution"
     }
-}
-
-@RunWith(Parameterized::class)
-internal class ModelNamingTests(private val modelName: String, private val actualName: String) {
 
     @Test
     fun `request should include right model name`() = doBlocking {
-        val channel = ByteChannel(autoFlush = true)
-        val mockEngine = MockEngine {
-            respond(channel, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
-        }
-        prepareStreamingResponse(createResponses("Random")).forEach { channel.writeFully(it) }
-        val controller =
-            APIController(
-                "super_cool_test_key",
-                modelName,
-                RequestOptions(),
-                mockEngine,
-                TEST_CLIENT_ID,
-                null,
-            )
-
-        withTimeout(5.seconds) {
-            controller.generateContentStream(textGenerateContentRequest("cats")).collect {
-                it.candidates?.isEmpty() shouldBe false
-                channel.close()
+        val models = models()
+        models.forEach { (modelName, actualName) ->
+            val channel = ByteChannel(autoFlush = true)
+            val mockEngine = MockEngine {
+                respond(channel, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
             }
-        }
+            prepareStreamingResponse(createResponses("Random")).forEach { channel.writeFully(it) }
+            val controller =
+                APIController(
+                    "super_cool_test_key",
+                    modelName,
+                    RequestOptions(),
+                    mockEngine,
+                    TEST_CLIENT_ID,
+                    null,
+                )
 
-        mockEngine.requestHistory.first().url.encodedPath shouldContain actualName
+            withTimeout(5.seconds) {
+                controller.generateContentStream(textGenerateContentRequest("cats")).collect {
+                    it.candidates?.isEmpty() shouldBe false
+                    channel.close()
+                }
+            }
+
+            mockEngine.requestHistory.first().url.encodedPath shouldContain actualName
+        }
     }
 
     companion object {
-        @JvmStatic
-        @Parameterized.Parameters
-        fun data() =
+        fun models() =
             listOf(
                 arrayOf("gemini-pro", "models/gemini-pro"),
                 arrayOf("x/gemini-pro", "x/gemini-pro"),

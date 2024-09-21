@@ -39,7 +39,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
 
 @Serializable internal data class MountainColors(val name: String, val colors: List<String>)

@@ -84,19 +84,21 @@ internal constructor(
         headerProvider: HeaderProvider? = null,
     ) : this(key, model, requestOptions, null, apiClient, headerProvider)
 
+    // @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     constructor(
         key: String,
         model: String,
         requestOptions: RequestOptions,
         apiClient: String,
         headerProvider: HeaderProvider?,
+        httpEngine: HttpClientEngine?,
         channel: ByteChannel,
         status: HttpStatusCode,
     ) : this(
         key,
         model,
         requestOptions,
-        null,
+        httpEngine,
         apiClient,
         headerProvider,
     )

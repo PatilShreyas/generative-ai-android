@@ -104,9 +104,6 @@ internal fun commonTest(
     block: CommonTest,
 ) = doBlocking {
     val channel = ByteChannel(autoFlush = true)
-    val mockEngine = MockEngine {
-        respond(channel, status, headersOf(HttpHeaders.ContentType, "application/json"))
-    }
     val apiController =
         APIController(
             "super_cool_test_key",
@@ -114,6 +111,13 @@ internal fun commonTest(
             requestOptions,
             TEST_CLIENT_ID,
             null,
+            MockEngine {
+                respond(
+                    channel,
+                    status,
+                    headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            },
             channel,
             status,
         )

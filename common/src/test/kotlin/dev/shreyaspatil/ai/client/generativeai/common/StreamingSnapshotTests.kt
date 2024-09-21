@@ -26,10 +26,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withTimeout
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
 
 internal class StreamingSnapshotTests {
